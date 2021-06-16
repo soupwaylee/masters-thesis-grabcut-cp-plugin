@@ -1,0 +1,5 @@
+flask==1.1.4
+flask-restx
+Flask-SQLAlchemy
+Flask-Migrate==2.7.0
+psycopg2

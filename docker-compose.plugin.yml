@@ -1,0 +1,55 @@
+version: "3"
+
+volumes:
+    cp-plugin-grabcut-postgres-data:
+        driver: local
+ 
+services:
+    cp-plugin-grabcut-frontend:
+        build: ./cp-plugin-grabcut/frontend
+        volumes:
+            - type: bind
+              source: ${CP_MICROSERVICES_HOST_LOCATION}/cp-plugin-grabcut/frontend/src
+              target: /usr/src/app/src
+              read_only: true
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.cp-plugin-grabcut-frontend.rule=PathPrefix(`/frontends/grabcut`)"
+            - "traefik.http.routers.cp-plugin-grabcut-frontend.entrypoints=web"
+
+    cp-plugin-grabcut-backend:
+        build: ./cp-plugin-grabcut/backend
+        volumes:
+            - type: bind
+              source: ${CP_MICROSERVICES_HOST_LOCATION}/cp-plugin-grabcut/backend/src
+              target: /usr/src/app/src
+              read_only: false
+        links:
+            - cp-plugin-grabcut-postgres
+        depends_on:
+            cp-plugin-grabcut-postgres:
+                condition: service_healthy
+        environment:
+            - PGHOST=cp-plugin-grabcut-postgres
+            - PGDATABASE=postgres
+            - PGUSER=postgres
+            - PGPASSWORD=postgres
+            - PGPORT=5432
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.cp-plugin-grabcut-backend.rule=PathPrefix(`/grabcut`)"
+            - "traefik.http.routers.cp-plugin-grabcut-backend.entrypoints=web"
+
+    cp-plugin-grabcut-postgres:
+        image: postgres:alpine
+        restart: always
+        environment:
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_USER: postgres
+        volumes:
+            - cp-plugin-grabcut-postgres-data:/var/lib/postgresql/data:rw
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 3s
+            timeout: 5s
+            retries: 5

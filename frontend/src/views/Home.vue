@@ -1,37 +1,41 @@
 <template>
   <Card class="noTotalWidth p-shadow-5">
-    <div class="title-wrapper">
-      <span class="title">GrabCut</span>
-			<Button icon="pi pi-info-circle"
-				@click="openGrabCutInfo"/>
-      <Dialog v-model:visible="displayInfo"
-				:closeOnEscape="true"
-				:dismissableMask="true"
-				:closable="true">
-        <div class="dialog-header">
-          <h3>GrabCut</h3>
-        </div>
+    <template #title>
+      <div class="title-wrapper">
+        <span class="title">GrabCut</span>
+        <Button icon="pi pi-info-circle"
+          @click="openGrabCutInfo"/>
+        <Dialog v-model:visible="displayInfo"
+          :closeOnEscape="true"
+          :dismissableMask="true"
+          :closable="true">
+          <div class="dialog-header">
+            <h3>GrabCut</h3>
+          </div>
 
-        This is GrabCut. Explainations will follow.
+          This is GrabCut. Explainations will follow.
 
-      </Dialog>
-    </div>
-    <div class="tool-wrapper">
-			<RadioButton id="brush1" name="brushType" value="fg" v-model="brushType" />
-			<label for="brush1">Foreground</label>
-			<RadioButton id="brush2" name="brushType" value="bg" v-model="brushType" />
-			<label for="brush2">Background</label>
-			<Slider v-model="brushSizeRange" 
-        :range="true" 
-        ref="brushSizeSlider"
-      />
-			<span class="p-buttonset">
-				<Button label="Undo" icon="pi pi-undo" />
-				<Button label="Redo" icon="pi pi-refresh" />
-				<Button label="Clear" icon="pi pi-trash" />
-			</span>
-		</div>
-    <canvas id="canvas" ref="canvas"></canvas>
+        </Dialog>
+      </div>
+    </template>
+      <template #content>
+      <div class="tool-wrapper">
+        <RadioButton id="brush1" name="brushType" value="fg" v-model="brushType" />
+        <label for="brush1">Foreground</label>
+        <RadioButton id="brush2" name="brushType" value="bg" v-model="brushType" />
+        <label for="brush2">Background</label>
+        <Slider v-model="brushSizeRange" 
+          :range="true" 
+          ref="brushSizeSlider"
+        />
+        <span class="p-buttonset">
+          <Button label="Undo" icon="pi pi-undo" />
+          <Button label="Redo" icon="pi pi-refresh" />
+          <Button label="Clear" icon="pi pi-trash" />
+        </span>
+      </div>
+      <canvas id="canvas" ref="canvas"></canvas>
+    </template>
   </Card>
 </template>
 

@@ -1,91 +1,106 @@
 <template>
-	<Card class="noTotalWidth p-shadow-5">
-		<template #title>
-			Plugin grabcut → ToDo Example
-		</template>
-		<template #content>
-			<form id="newTodoForm" @submit.prevent="addTodo()" class="p-formgroup-inline">
-				<span class="p-float-label">
-					<InputText
-						id="newTodoInput"
-						v-model="newTodo"
-						name="newTodo"
-						autocomplete="off"
-					/>
-					<label for="newTodoInput">New ToDo</label>
-				</span>
-				<Button type="submit" label="Add ToDo" />
-			</form>
-			<h2>ToDo List</h2>
+  <Card class="noTotalWidth p-shadow-5">
+    <div class="title-wrapper">
+      <span class="title">GrabCut</span>
+			<Button icon="pi pi-info-circle"
+				@click="openGrabCutInfo"/>
+      <Dialog v-model:visible="displayInfo"
+				:closeOnEscape="true"
+				:dismissableMask="true"
+				:closable="true">
+        <div class="dialog-header">
+          <h3>GrabCut</h3>
+        </div>
 
-			<DataTable :value="todos" :reorderableColumns="true" @rowReorder="onRowReorder" responsiveLayout="scroll">
-				<Column :rowReorder="true" headerStyle="width: 3rem" :reorderableColumn="false" />
-				<Column field="id" header="ID"></Column>
-				<Column field="task" header="Task"></Column>
-				<Column :exportable="false" :reorderableColumn="false" headerStyle="width: 3rem">
-                    <template #body="slotProps">
-                        <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="removeTodo(slotProps.data)" />
-                    </template>
-                </Column>
-			</DataTable>
+        This is GrabCut. Explainations will follow.
 
-			<h4 v-if="todos.length === 0">Empty list.</h4>
-		</template>
-	</Card>
+      </Dialog>
+    </div>
+    <div class="tool-wrapper">
+			<RadioButton id="brush1" name="brushType" value="fg" v-model="brushType" />
+			<label for="brush1">Foreground</label>
+			<RadioButton id="brush2" name="brushType" value="bg" v-model="brushType" />
+			<label for="brush2">Background</label>
+			<Slider v-model="brushSizeRange" 
+        :range="true" 
+        ref="brushSizeSlider"
+      />
+			<span class="p-buttonset">
+				<Button label="Undo" icon="pi pi-undo" />
+				<Button label="Redo" icon="pi pi-refresh" />
+				<Button label="Clear" icon="pi pi-trash" />
+			</span>
+		</div>
+    <canvas id="canvas" ref="canvas"></canvas>
+  </Card>
 </template>
 
 <script>
-	//import { ref } from 'vue';
-	import { APIService as grabcutAPIService } from '../api/grabcutAPI';
-	const grabcutAS = new grabcutAPIService();
-	export default {
-		name: 'App',
-		data() {
-			return {
-				todos: [],
-				newTodo: ''
-			}
+// import { ref } from 'vue';
+// import { APIService as grabcutAPIService } from "../api/grabcutAPI";
+// const grabcutAS = new grabcutAPIService();
+export default {
+  name: "App",
+  data() {
+    return {
+      displayInfo: false,
+			brushType: 'fg',
+      brushSize: 2,
+			brushSizeRange: [0,30],
+      canvasCtx: null,
+      mouseX: 0,
+      mouseY: 0,
+    };
+  },
+  created() {
+    this.mouseX = 0;
+    this.mouseY = 0;
+  },
+  mounted() {
+    const canvas = this.$refs.canvas;
+    this.canvasCtx = canvas.getContext('2d');
+    canvas.addEventListener('mousedown', this.startMousePath);
+    canvas.addEventListener('mouseup', this.stopMousePath);
+    window.addEventListener('resize', this.resize);
+    this.resize();
+  },
+  methods: {
+		openGrabCutInfo() {
+			this.displayInfo = true;
 		},
-		methods: {
-			getTodos() {
-				grabcutAS.getTodos().then( (data) => {
-					console.log(data)
-					this.todos = data;
-				});
-			},
-			addTodo() {
-				console.log('new todo!')
-				console.log(this.newTodo)
-				if( this.newTodo ) {
-					grabcutAS.newTodo(this.newTodo).then( (data) => {
-						this.todos.push(data)
-					});
-					this.newTodo = '';
-				}
-			},
-			removeTodo(data) {
-				grabcutAS.deleteTodo(data.id);
-				this.todos = this.todos.filter(element => data.id != element.id);
-			},
-			onRowReorder(event) {
-				this.todos = event.value;
-			}
-		},
-		mounted() {
-			this.getTodos();
-		},
-	}
+    reposition(e) {
+      this.mouseX = e.clientX - this.$refs.canvas.getBoundingClientRect().left;
+      this.mouseY = e.clientY - this.$refs.canvas.getBoundingClientRect().top;
+    },
+    startMousePath(e) {
+      this.$refs.canvas.addEventListener('mousemove', this.draw);
+      this.reposition(e);
+    },
+    stopMousePath() {
+      this.$refs.canvas.removeEventListener('mousemove', this.draw);
+    },
+    draw(e) {
+      this.canvasCtx.beginPath();
+      this.canvasCtx.lineWidth = this.$refs.brushSizeSlider.modelValue; // TODO = this.brushWidth;
+      // console.log(`${this.canvasCtx.ctx.lineWidth}`);
+      this.canvasCtx.lineCap = 'square';
+      this.canvasCtx.strokeStyle = 'rgba(255, 0, 0, 1)';
+      this.canvasCtx.moveTo(this.mouseX, this.mouseY);
+      this.reposition(e);
+      this.canvasCtx.lineTo(this.mouseX, this.mouseY);
+      this.canvasCtx.stroke();
+    },
+    resize() {
+      this.canvasCtx.canvas.width = 512;
+      this.canvasCtx.canvas.height = 384;
+    },
+  },
+};
 </script>
 
 <style lang="scss">
-
 .noTotalWidth {
-	width: 80%;
-	margin: auto;
+  width: 80%;
+  margin: auto;
 }
-
-#newTodoForm {
-	justify-content: center;
-}
-
 </style>

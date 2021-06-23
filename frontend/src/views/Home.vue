@@ -13,19 +13,22 @@
             <h3>GrabCut</h3>
           </div>
 
-          This is GrabCut. Explainations will follow.
+          This is GrabCut. Explanations will follow.
 
         </Dialog>
       </div>
     </template>
       <template #content>
       <div class="tool-wrapper">
-        <RadioButton id="brush1" name="brushType" value="fg" v-model="brushType" />
-        <label for="brush1">Foreground</label>
-        <RadioButton id="brush2" name="brushType" value="bg" v-model="brushType" />
-        <label for="brush2">Background</label>
-        <Slider v-model="brushSizeRange" 
-          :range="true" 
+        <RadioButton id="fgBrushButton" name="brushType" value="fg" v-model="brushType"/>
+        <label for="fgBrushButton">Foreground</label><br>
+        <RadioButton id="bgBrushButton" name="brushType" value="bg" v-model="brushType"/>
+        <label for="bgBrushButton">Background</label><br>
+        <label for="sizeSlider">Size</label>
+        <Slider id="sizeSlider"
+            v-model="brushSize"
+                :min="brushSizeRange[0]"
+                :max="brushSizeRange[1]"
           ref="brushSizeSlider"
         />
         <span class="p-buttonset">
@@ -49,7 +52,7 @@ export default {
     return {
       displayInfo: false,
 			brushType: 'fg',
-      brushSize: 2,
+      brushSize: null,
 			brushSizeRange: [0,30],
       canvasCtx: null,
       mouseX: 0,
@@ -85,10 +88,9 @@ export default {
     },
     draw(e) {
       this.canvasCtx.beginPath();
-      this.canvasCtx.lineWidth = this.$refs.brushSizeSlider.modelValue; // TODO = this.brushWidth;
-      // console.log(`${this.canvasCtx.ctx.lineWidth}`);
+      this.canvasCtx.lineWidth = this.brushSize;
       this.canvasCtx.lineCap = 'square';
-      this.canvasCtx.strokeStyle = 'rgba(255, 0, 0, 1)';
+      this.canvasCtx.strokeStyle = ((this.brushType === 'fg') ? 'rgba(255, 0, 0, 1)' : 'rgba(0, 0, 255, 1)');
       this.canvasCtx.moveTo(this.mouseX, this.mouseY);
       this.reposition(e);
       this.canvasCtx.lineTo(this.mouseX, this.mouseY);

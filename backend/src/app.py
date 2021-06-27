@@ -23,8 +23,6 @@ db = SQLAlchemy(app)
 
 from models import TodoModel
 
-db.create_all()
-
 # Needed to initialize/migrate the database
 # https://flask-migrate.readthedocs.io/en/latest/
 migrate = Migrate(app, db) 

@@ -18,7 +18,7 @@
         </Dialog>
       </div>
     </template>
-      <template #content>
+    <template #content>
       <div class="tool-wrapper">
         <RadioButton id="fgBrushButton" name="brushType" value="fg" v-model="brushType"/>
         <label for="fgBrushButton">Foreground</label><br>
@@ -51,13 +51,35 @@ export default {
   data() {
     return {
       displayInfo: false,
-			brushType: 'fg',
-      brushSize: null,
 			brushSizeRange: [0,30],
       canvasCtx: null,
       mouseX: 0,
       mouseY: 0,
     };
+  },
+  computed: {
+    brushType: {
+      get () {
+        return this.$store.getters.getBrushType;
+      },
+      set (type) {
+        this.$store.commit({
+          type: 'SET_BRUSHTYPE',
+          brushType: type
+        });
+      }
+    },
+    brushSize: {
+      get () {
+        return this.$store.getters.getBrushSize;
+      },
+      set (size) {
+        this.$store.commit({
+          type: 'SET_BRUSHSIZE',
+          brushSize: size
+        });
+      }
+    },
   },
   created() {
     this.mouseX = 0;

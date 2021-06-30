@@ -1,12 +1,8 @@
-import { createStore } from 'vuex'
+import { createStore } from 'vuex';
+import canvasModule from './modules/canvas';
 
 export default createStore({
-  state: {
-  },
-  mutations: {
-  },
-  actions: {
-  },
   modules: {
+    canvasModule
   }
-})
+});

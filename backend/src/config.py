@@ -1,5 +1,6 @@
 import os
 
+
 class Config:
     DEBUG = False
     DEVELOPMENT = False
@@ -12,6 +13,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+
 class ProductionConfig(Config):
     pass
 
@@ -23,3 +25,14 @@ class StagingConfig(Config):
 class DevelopmentConfig(Config):
     DEBUG = True
     DEVELOPMENT = True
+
+
+class TestingConfig(Config):
+    TESTING = True
+    DEBUG = True
+    PGHOST = os.getenv('PGHOST')
+    PGDATABASE = os.getenv('PGDATABASE')
+    PGUSER = os.getenv('PGUSER')
+    PGPASSWORD = os.getenv('PGPASSWORD')
+    PGPORT = os.getenv('PGPORT')
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/test_db"

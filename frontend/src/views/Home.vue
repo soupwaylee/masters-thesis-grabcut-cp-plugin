@@ -36,7 +36,7 @@
           <Button label="Clear" icon="pi pi-trash" />
         </span>
       </div>
-      <canvas id="canvas" ref="canvas"></canvas>
+      <InteractionCanvas/>
     </template>
   </Card>
 </template>
@@ -45,15 +45,17 @@
 // import { ref } from 'vue';
 // import { APIService as grabcutAPIService } from "../api/grabcutAPI";
 // const grabcutAS = new grabcutAPIService();
+import InteractionCanvas from "@/components/InteractionCanvas";
+
 export default {
   name: "App",
+  components: {
+    InteractionCanvas
+  },
   data() {
     return {
       displayInfo: false,
 			brushSizeRange: [0,30],
-      canvasCtx: null,
-      mouseX: 0,
-      mouseY: 0,
     };
   },
   computed: {
@@ -80,47 +82,10 @@ export default {
       }
     },
   },
-  created() {
-    this.mouseX = 0;
-    this.mouseY = 0;
-  },
-  mounted() {
-    const canvas = this.$refs.canvas;
-    this.canvasCtx = canvas.getContext('2d');
-    canvas.addEventListener('mousedown', this.startMousePath);
-    canvas.addEventListener('mouseup', this.stopMousePath);
-    window.addEventListener('resize', this.resize);
-    this.resize();
-  },
   methods: {
 		openGrabCutInfo() {
 			this.displayInfo = true;
 		},
-    reposition(e) {
-      this.mouseX = e.clientX - this.$refs.canvas.getBoundingClientRect().left;
-      this.mouseY = e.clientY - this.$refs.canvas.getBoundingClientRect().top;
-    },
-    startMousePath(e) {
-      this.$refs.canvas.addEventListener('mousemove', this.draw);
-      this.reposition(e);
-    },
-    stopMousePath() {
-      this.$refs.canvas.removeEventListener('mousemove', this.draw);
-    },
-    draw(e) {
-      this.canvasCtx.beginPath();
-      this.canvasCtx.lineWidth = this.brushSize;
-      this.canvasCtx.lineCap = 'square';
-      this.canvasCtx.strokeStyle = ((this.brushType === 'fg') ? 'rgba(255, 0, 0, 1)' : 'rgba(0, 0, 255, 1)');
-      this.canvasCtx.moveTo(this.mouseX, this.mouseY);
-      this.reposition(e);
-      this.canvasCtx.lineTo(this.mouseX, this.mouseY);
-      this.canvasCtx.stroke();
-    },
-    resize() {
-      this.canvasCtx.canvas.width = 512;
-      this.canvasCtx.canvas.height = 384;
-    },
   },
 };
 </script>

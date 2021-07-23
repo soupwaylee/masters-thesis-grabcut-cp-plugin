@@ -3,6 +3,7 @@ import canvasModule from './modules/canvas';
 
 export default createStore({
   modules: {
-    canvasModule
+    canvasModule,
+    // interactionSessionModule
   }
 });

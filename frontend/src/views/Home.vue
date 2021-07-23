@@ -26,10 +26,9 @@
         <label for="bgBrushButton">Background</label><br>
         <label for="sizeSlider">Size</label>
         <Slider id="sizeSlider"
-            v-model="brushSize"
+                v-model="brushSize"
                 :min="brushSizeRange[0]"
                 :max="brushSizeRange[1]"
-          ref="brushSizeSlider"
         />
         <span class="p-buttonset">
           <Button label="Undo" icon="pi pi-undo" />

@@ -4,3 +4,5 @@ Flask-SQLAlchemy
 Flask-Migrate==2.7.0
 psycopg2
 numpy
+debugpy
+pydevd-pycharm~=211.7628.24

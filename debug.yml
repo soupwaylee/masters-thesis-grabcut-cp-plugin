@@ -1,0 +1,12 @@
+# list available containers that support debugging in vs code via debugpy, and specify pathMappings
+containers:
+  cp-plugin-grabcut-backend:
+    pathMappings:
+      - localRoot: "backend/src"
+        remoteRoot: "/usr/src/app/src"
+    variants:
+      vscode:
+        type: python
+        port: 5678
+      pycharm:
+        type: PyRemoteDebugConfigurationType

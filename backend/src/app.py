@@ -1,5 +1,14 @@
 import os
 
+if os.getenv("CP_DEV_VSCODEDEBUG_HOST") == "cp-plugin-grabcut-backend":
+    import debugpy
+    debugpy.listen(('cp-plugin-grabcut-backend', 5678))
+    print("\033[1m\033[32m ready to attach VS Code debugger, press F5 in VS Code! \033[0m") # \033 stuff is for bold green text
+if os.getenv("CP_DEV_PYCHARMDEBUG_TARGET") == "cp-plugin-grabcut-backend":
+    import pydevd_pycharm
+    pydevd_pycharm.settrace('cp-traefik', port=5679, stdoutToServer=True, stderrToServer=True, suspend=False)
+
+
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 

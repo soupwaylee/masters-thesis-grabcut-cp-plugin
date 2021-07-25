@@ -1,6 +1,7 @@
 from flask_restx import Api
 
 from .namespaceGCI import api as gci_api
+from .namespaceImages import api as dhmimg_api
 
 api = Api(
     title='GrabCut interaction endpoint',
@@ -8,4 +9,4 @@ api = Api(
 )
 
 api.add_namespace(gci_api, path='/grabcuts')
-# api.add_namespace(namespaceGCI, path='/dhmimages')
+api.add_namespace(dhmimg_api, path='/dhmimages')

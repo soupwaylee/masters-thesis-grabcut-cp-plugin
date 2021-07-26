@@ -1,13 +1,17 @@
 import axios from 'axios';
 
-const APIBaseURL = '/grabcut/';
+import store from '../store';
+
+const APIBaseURL = '/grabcut';
 
 export class APIService {
 
     constructor() {
+        // this.store = store;
+
         this.instance = axios.create({
             baseURL: APIBaseURL,
-            timeout: 1000,
+            timeout: 1000 * 5,
         });
     }
 
@@ -21,5 +25,9 @@ export class APIService {
 
     deleteTodo(id) {
         return this.instance.delete(`todos/${id}`)
+    }
+
+    getDHMImage(id) {
+        return this.instance.get(`/dhmimages/${id}`).then( response => response.data );
     }
 }

@@ -20,10 +20,6 @@
     </template>
     <template #content>
       <div class="tool-wrapper">
-        <RadioButton id="fgBrushButton" name="brushType" value="fg" v-model="brushType"/>
-        <label for="fgBrushButton">Foreground</label><br>
-        <RadioButton id="bgBrushButton" name="brushType" value="bg" v-model="brushType"/>
-        <label for="bgBrushButton">Background</label><br>
         <label for="sizeSlider">Size</label>
         <Slider id="sizeSlider"
                 v-model="brushSize"
@@ -31,6 +27,7 @@
                 :max="brushSizeRange[1]"
         />
         <span class="p-buttonset">
+          <SelectButton v-model="brushType" :options="brushOptions" optionLabel="name" optionValue="value"/>
           <Button label="Undo" icon="pi pi-undo" />
           <Button label="Redo" icon="pi pi-refresh" />
           <Button label="Clear" icon="pi pi-trash" />
@@ -55,6 +52,10 @@ export default {
   data() {
     return {
       displayInfo: false,
+      brushOptions: [
+        {name: 'Foreground', value: 'fg'},
+        {name: 'Background', value: 'bg'}
+      ],
 			brushSizeRange: [0,30],
     };
   },

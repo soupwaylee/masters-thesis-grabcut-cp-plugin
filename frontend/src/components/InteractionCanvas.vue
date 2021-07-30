@@ -46,14 +46,16 @@ export default {
     const canvas = this.$refs.canvas;
     this.canvasCtx = canvas.getContext('2d');
     canvas.addEventListener('mousedown', this.startMousePath);
+    canvas.addEventListener('mouseout', this.stopMousePath);
     canvas.addEventListener('mouseup', this.stopMousePath);
     window.addEventListener('resize', this.resize);
     this.resize();
   },
   methods: {
     repositionMouse(e) {
-      this.mouseX = e.clientX - this.$refs.canvas.getBoundingClientRect().left;
-      this.mouseY = e.clientY - this.$refs.canvas.getBoundingClientRect().top;
+      let { left, top } = this.$refs.canvas.getBoundingClientRect();
+      this.mouseX = e.clientX - left;
+      this.mouseY = e.clientY - top;
     },
 
     startMousePath(e) {

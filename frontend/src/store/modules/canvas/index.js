@@ -1,6 +1,6 @@
 const state = {
   brushType: 'fg',
-  brushSize: null,
+  brushSize: 1,
 };
 
 const mutations = {

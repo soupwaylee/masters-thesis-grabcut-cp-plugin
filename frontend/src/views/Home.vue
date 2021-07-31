@@ -14,26 +14,34 @@
           </div>
 
           This is GrabCut. Explanations will follow.
+          <!-- Mark a subset of foreground and background pixels. -->
+          <!-- Submit to check the segmentation output based on your provided input. -->
+          <!-- Click Finish to move to the next image. -->
+          <!-- Once you click Finish you can't go back to the previous image -->
 
         </Dialog>
       </div>
     </template>
     <template #content>
       <div class="tool-wrapper">
-        <label for="sizeSlider">Size</label>
+        <label for="sizeSlider">Size: {{ brushSize }}</label>
         <Slider id="sizeSlider"
                 v-model="brushSize"
                 :min="brushSizeRange[0]"
                 :max="brushSizeRange[1]"
         />
         <span class="p-buttonset">
-          <SelectButton v-model="brushType" :options="brushOptions" optionLabel="name" optionValue="value"/>
+          <SelectButton v-model="brushType" :options="brushOptions" optionLabel="name" optionValue="value" dataKey="value"/>
           <Button label="Undo" icon="pi pi-undo" />
           <Button label="Redo" icon="pi pi-refresh" />
           <Button label="Clear" icon="pi pi-trash" />
         </span>
       </div>
       <InteractionCanvas/>
+      <div class="progression-wrapper">
+        <Button label="Segment" icon="pi pi-cloud-upload" />
+        <Button label="Finish" icon="pi pi-check" />
+      </div>
     </template>
   </Card>
 </template>
@@ -51,12 +59,12 @@ export default {
   },
   data() {
     return {
-      displayInfo: false,
+      displayInfo: false, //TODO this should be true for deployment (for the purpose of showing instructions etc.)
       brushOptions: [
-        {name: 'Foreground', value: 'fg'},
-        {name: 'Background', value: 'bg'}
+        {name: 'Foreground', value: 'fg', icon: 'pi pi-circle-off'},
+        {name: 'Background', value: 'bg', icon: 'pi pi-circle-on'}
       ],
-			brushSizeRange: [0,30],
+			brushSizeRange: [1,30],
     };
   },
   computed: {

@@ -54,13 +54,14 @@ export default {
   methods: {
     repositionMouse(e) {
       let { left, top } = this.$refs.canvas.getBoundingClientRect();
-      this.mouseX = e.clientX - left;
-      this.mouseY = e.clientY - top;
+      this.mouseX = parseInt(e.clientX - left);
+      this.mouseY = parseInt(e.clientY - top);
     },
 
     startMousePath(e) {
       this.$refs.canvas.addEventListener('mousemove', this.draw);
       this.repositionMouse(e);
+      //TODO push an object (an empty path) to undo stack (so that we don't need to push individual pixels as undo operations)
     },
 
     stopMousePath() {
@@ -98,6 +99,7 @@ export default {
       const dhmCtx = dhmCanvas.getContext('2d');
       const dhmImgData = dhmCtx.getImageData(0, 0, dhmCanvas.width, dhmCanvas.height);
 
+      //TODO offer multiple options for color picking
       let colors = colormap({
         colormap: 'jet',
         nshades: 255,
@@ -126,6 +128,8 @@ export default {
   .outsideWrapper {
     width: 512px;
     height: 382px;
+    display: block;
+    margin: 0 auto;
   }
 
   .insideWrapper {

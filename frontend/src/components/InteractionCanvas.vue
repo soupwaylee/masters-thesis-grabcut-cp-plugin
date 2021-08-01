@@ -23,6 +23,12 @@ export default {
       height: 384,
       mouseX: 0,
       mouseY: 0,
+      lastX: 0,
+      lastY: 0,
+      drawing: false,
+      points: [],
+      redoStack: [],
+      pointsPerScribble: []
     };
   },
   computed: {
@@ -33,6 +39,10 @@ export default {
     brushSize() {
       return this.$store.getters.getBrushSize;
     },
+
+    selectedStrokeColor() {
+      return (this.brushType === 'fg') ? 'rgba(255, 0, 0, 1)' : 'rgba(0, 0, 255, 1)'
+    }
   },
   async created() {
     this.loadImage()
@@ -46,12 +56,30 @@ export default {
     const canvas = this.$refs.canvas;
     this.canvasCtx = canvas.getContext('2d');
     canvas.addEventListener('mousedown', this.startMousePath);
+    //TODO mouseout will also trigger console log action..
     canvas.addEventListener('mouseout', this.stopMousePath);
     canvas.addEventListener('mouseup', this.stopMousePath);
     window.addEventListener('resize', this.resize);
     this.resize();
   },
   methods: {
+    clearDrawings() {
+      this.canvasCtx.clearRect(0, 0, this.canvasCtx.canvas.width, this.canvasCtx.canvas.height);
+      this.points = [];
+      this.redoStack = [];
+      this.pointsPerScribble = [];
+    },
+
+    setUpBrush() {
+      this.canvasCtx.lineCap = 'square';
+      if (this.canvasCtx.lineWidth !== this.brushSize) {
+        this.canvasCtx.lineWidth = this.brushSize;
+      }
+      if (this.canvasCtx.strokeStyle !== this.selectedStrokeColor) {
+        this.canvasCtx.strokeStyle = (this.brushType === 'fg') ? 'rgba(255, 0, 0, 1)' : 'rgba(0, 0, 255, 1)';
+      }
+    },
+
     repositionMouse(e) {
       let { left, top } = this.$refs.canvas.getBoundingClientRect();
       this.mouseX = parseInt(e.clientX - left);
@@ -59,29 +87,93 @@ export default {
     },
 
     startMousePath(e) {
+      this.setUpBrush();
       this.$refs.canvas.addEventListener('mousemove', this.draw);
       this.repositionMouse(e);
-      //TODO push an object (an empty path) to undo stack (so that we don't need to push individual pixels as undo operations)
+      this.pointsPerScribble.push(0);
+      this.addPointToCurrentStroke("begin");
     },
 
     stopMousePath() {
+      if (!this.drawing) {
+        return;
+      }
       this.$refs.canvas.removeEventListener('mousemove', this.draw);
+      this.addPointToCurrentStroke("end");
+      this.drawing = false;
+      // console.log(e.buttons);
+      // console.log(e.type);
+      let reducer = (acc, curr) => acc + curr;
+      console.log(`Scribbles: ${this.pointsPerScribble.length}`);
+      console.log(`Points: ${this.points.length}`);
     },
 
     draw(e) {
+      this.drawing = true;
       this.canvasCtx.beginPath();
-      this.canvasCtx.lineWidth = this.brushSize;
-      this.canvasCtx.lineCap = 'square';
-      this.canvasCtx.strokeStyle = ((this.brushType === 'fg') ? 'rgba(255, 0, 0, 1)' : 'rgba(0, 0, 255, 1)');
       this.canvasCtx.moveTo(this.mouseX, this.mouseY);
+      this.addPointToCurrentStroke("draw");
       this.repositionMouse(e);
       this.canvasCtx.lineTo(this.mouseX, this.mouseY);
       this.canvasCtx.stroke();
+      this.lastX = this.mouseX;
+      this.lastY = this.mouseY;
+      this.addPointToCurrentStroke("draw");
     },
 
     resize() {
       this.canvasCtx.canvas.width = this.width;
       this.canvasCtx.canvas.height = this.height;
+    },
+
+    addPointToCurrentStroke(trigger) {
+      this.points.push({
+        x: this.mouseX,
+        y: this.mouseY,
+        size: this.brushSize,
+        color: this.canvasCtx.strokeStyle,
+        trigger: trigger
+      });
+
+      this.pointsPerScribble[this.pointsPerScribble.length - 1]++;
+    },
+
+    redrawAllPoints() {
+      this.canvasCtx.clearRect(0, 0, this.canvasCtx.canvas.width, this.canvasCtx.canvas.height);
+
+      for (const [i, point] of this.points.entries()) {
+        let begin = false;
+
+        if (this.canvasCtx.lineWidth !== point.size) {
+          this.canvasCtx.lineWidth = point.size;
+          begin = true;
+        }
+        if (this.canvasCtx.strokeStyle !== point.color) {
+          this.canvasCtx.strokeStyle = point.color;
+          begin = true;
+        }
+        if (point.trigger === 'begin' || begin) {
+          this.canvasCtx.beginPath();
+          this.canvasCtx.moveTo(point.x, point.y);
+        }
+        this.canvasCtx.lineTo(point.x, point.y);
+        if (point.trigger === 'end' || (i === this.points.length - 1)) {
+          this.canvasCtx.stroke();
+        }
+      }
+    },
+
+    undoLastStroke() {
+      if (this.pointsPerScribble.length === 0 || this.points.length === 0) return;
+
+      let undoScribbleLength = this.pointsPerScribble.pop();
+      while (undoScribbleLength > 0) {
+        let pt = this.points.pop();
+        // this.redoStack.unshift(pt); TODO: unshift the discarded points to the redo stack
+        undoScribbleLength -= 1;
+      }
+
+      this.redrawAllPoints();
     },
 
     async loadImage() {

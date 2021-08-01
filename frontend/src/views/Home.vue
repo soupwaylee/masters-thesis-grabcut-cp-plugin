@@ -32,12 +32,12 @@
         />
         <span class="p-buttonset">
           <SelectButton v-model="brushType" :options="brushOptions" optionLabel="name" optionValue="value" dataKey="value"/>
-          <Button label="Undo" icon="pi pi-undo" />
+          <Button label="Undo" icon="pi pi-undo" @click="$refs.ic.undoLastStroke()"/>
           <Button label="Redo" icon="pi pi-refresh" />
-          <Button label="Clear" icon="pi pi-trash" />
+          <Button label="Clear" icon="pi pi-trash" @click="$refs.ic.clearDrawings()"/>
         </span>
       </div>
-      <InteractionCanvas/>
+      <InteractionCanvas ref="ic"/>
       <div class="progression-wrapper">
         <Button label="Segment" icon="pi pi-cloud-upload" />
         <Button label="Finish" icon="pi pi-check" />

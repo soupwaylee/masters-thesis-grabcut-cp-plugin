@@ -1,12 +1,14 @@
-FROM alpine
-
-RUN apk add python3 python3-dev py3-pip py3-wheel alpine-sdk postgresql-dev
+FROM python:buster
 
 RUN pip3 install --no-cache-dir gunicorn
 
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./
+
+RUN apt update
+
+RUN apt install libgl1-mesa-glx -y
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 

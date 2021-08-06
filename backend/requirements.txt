@@ -1,9 +1,15 @@
+# Basic webserver
+gunicorn
 flask==1.1.4
 flask-restx
 Flask-SQLAlchemy
 Flask-Migrate==2.7.0
 psycopg2
-numpy
-opencv-python
+
+# Debuggging capabilities
 debugpy
 pydevd-pycharm~=211.7628.24
+
+# Computing
+numpy
+opencv-python-headless

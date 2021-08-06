@@ -1,14 +1,14 @@
-FROM python:buster
+FROM python:3-slim-buster
 
-RUN pip3 install --no-cache-dir gunicorn
+ARG DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /usr/src/app
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y build-essential libgl1-mesa-glx python3-dev libpq-dev && \
+    apt-get clean -y && \
+    apt-get autoclean -y
 
 COPY requirements.txt ./
-
-RUN apt update
-
-RUN apt install libgl1-mesa-glx -y
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 

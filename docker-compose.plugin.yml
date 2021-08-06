@@ -29,6 +29,7 @@ services:
         depends_on:
             cp-plugin-grabcut-postgres:
                 condition: service_healthy
+        restart: always
         environment:
             - PGHOST=cp-plugin-grabcut-postgres
             - PGDATABASE=postgres

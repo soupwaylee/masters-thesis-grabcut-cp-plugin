@@ -15,4 +15,4 @@ api = Namespace('dhmimages', description='DHM phase image GET endpoint')
 @api.param('img_id', 'Numerical ID of the image from the set of DHM phase images for the experiment')
 class DHMImage(Resource):
     def get(self, img_id):
-        ImageHandler.get_image_as_response(img_id)
+        return ImageHandler.get_image_as_response(img_id)

@@ -3,8 +3,11 @@ import numpy as np
 
 class ImageHandler:
     img_data = np.load('./testimages.npz')
-    img_count = len(img_data)
-    images = {'{}'.format(i): img_data['img{}'.format(i)] for i in range(1, img_count + 1)}
+    # needed to create explicit scope for img_data here
+    # in order to bypass absence of class body in scope
+    images = (lambda img_data=img_data:
+              {f'{i}': img_data[f'img{i}']
+               for i in range(1, len(img_data) + 1)})()
 
     @staticmethod
     def get_image(img_id):

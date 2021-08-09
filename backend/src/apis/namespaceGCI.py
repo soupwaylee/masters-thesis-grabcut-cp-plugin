@@ -1,24 +1,37 @@
 from flask_restx import Namespace, Resource, fields
+from flask import abort, current_app, request
 from models.grabcutinteraction import GrabCutInteractionModel
 from db import db
 
 api = Namespace('grabcutinteractions', description='GrabCutInteraction operations')
 
-gc = api.model('GrabCutInteraction', {
-    'id':                       fields.String(readonly=True, description='UUID for the GrabCut interaction record'),
-    'session_id':               fields.String(readonly=True, required=True, description='ID for the labeling session'),
-    'image_id':                 fields.Integer(readonly=True, required=True,
-                                               description='ID for the image that had been '
-                                                           'labelled for the current record'),
-    'annotated_pixels':         fields.Integer(description='number of pixels that had been annotated by the user'),
-    'foreground_pixels':        fields.Integer(description='number of foreground pixels that had been marked'),
-    'background_pixels':        fields.Integer(description='number of background pixels that had been marked'),
-    'scribbles':                fields.Integer(description='total number of scribbles created by the user'),
-    'foreground_scribbles':     fields.Integer(description=''),
-    'background_scribbles':     fields.Integer(description='total number of background scribbles created by the user'),
-    'submissions':              fields.Integer(description='number of times a GrabCut segmentation was requested'),
-    'first_submission_time':    fields.DateTime(description='Timestamp for the first GrabCut segmentation request'),
-    'last_submission_time':     fields.DateTime(description='Timestamp of the last GrabCut segmentation request')
+interaction_record_fields = api.model('GrabCutInteraction', {
+    'id': fields.String(description='UUID for the GrabCut interaction record'),
+    'sessionId': fields.String(required=True, description='ID for the labeling session'),
+    'imageId': fields.Integer(required=True,
+                              description='ID for the image that had been '
+                                          'labelled for the current record'),
+    'annotatedPixels': fields.Integer(description='number of pixels that had been annotated by the user'),
+    'foregroundPixels': fields.Integer(description='number of foreground pixels that had been marked'),
+    'backgroundPixels': fields.Integer(description='number of background pixels that had been marked'),
+    'scribbles': fields.Integer(description='total number of scribbles created by the user'),
+    'foregroundScribbles': fields.Integer(description=''),
+    'backgroundScribbles': fields.Integer(description='total number of background scribbles created by the user'),
+    'submissionIndex': fields.Integer(description='submission counter'),
+    'submissionTime': fields.DateTime(description='GrabCut segmentation request timestamp',
+                                      dt_format='rfc822'),
+})
+
+scribble_pixel_fields = api.model('ScribblePixel', {
+    'x': fields.Integer(description='x-Coordinate for the pixel'),
+    'y': fields.Integer(description='y-Coordinate for the pixel'),
+    'type': fields.Integer(description='1 for foreground and 0 for background respectively',
+                           min=0, max=1)
+})
+
+segmentation_fields = api.model('ScribblePixelsList', {
+    'interactionRecord': fields.Nested(interaction_record_fields, skip_none=True),
+    'scribblePixels': fields.List(fields.Nested(scribble_pixel_fields))
 })
 
 
@@ -34,22 +47,24 @@ class GrabCutInteractionDAO(object):
         if gci := self.session.query(GrabCutInteractionModel).get(id):
             return gci
         else:
-            api.abort(404, "GrabCut Interaction record {} doesn't exist".format(id))
+            api.abort(404, f'GrabCut Interaction record {id} does not exist')
 
     def create(self, data):
-        # app.logger.debug(f"Creating GrabCutInteraction record: {str(data)}")
+        interaction_record = data['interactionRecord']
+        current_app.logger.info(f"Creating GrabCutInteraction record: {str(interaction_record)}")
+        # TODO perform db connection & segmentation asynchronously?
         gci = GrabCutInteractionModel(
-            session_id=data["session_id"],
-            image_id=data["image_id"],
-            annotated_pixels=data["annotated_pixels"],
-            foreground_pixels=data["foreground_pixels"],
-            background_pixels=data["background_pixels"],
-            scribbles=data["scribbles"],
-            foreground_scribbles=data["foreground_pixels"],
-            background_scribbles=data["background_scribbles"],
-            submissions=data["submissions"],
-            first_submission_time=data["first_submission_time"],
-            last_submission_time=data["last_submission_time"]
+            session_id=data['sessionId'],
+            image_id=data['imageId'],
+            annotated_pixels=data['annotatedPixels'],
+            foreground_pixels=data['foregroundPixels'],
+            background_pixels=data['backgroundPixels'],
+            scribbles=data['scribbles'],
+            foreground_scribbles=data['foregroundPixels'],
+            background_scribbles=data['backgroundScribbles'],
+            submissions=data['submissions'],
+            first_submission_time=data['firstSubmissionTime'],
+            last_submission_time=data['lastSubmissionTime']
         )
         self.session.add(gci)
         self.session.commit()
@@ -57,17 +72,17 @@ class GrabCutInteractionDAO(object):
 
     def update(self, id, data):
         gci = self.session.query(GrabCutInteractionModel).get(id)
-        gci.session_id = data["session_id"]
-        gci.image_id = data["image_id"]
-        gci.annotated_pixels = data["annotated_pixels"]
-        gci.foreground_pixels = data["foreground_pixels"]
-        gci.background_pixels = data["background_pixels"]
-        gci.scribbles = data["scribbles"]
-        gci.foreground_scribbles = data["foreground_pixels"]
-        gci.background_scribbles = data["background_scribbles"]
-        gci.submissions = data["submissions"]
-        gci.first_submission_time = data["first_submission_time"]
-        gci.last_submission_time = data["last_submission_time"]
+        gci.session_id =data['sessionId']
+        gci.image_id = data['imageId']
+        gci.annotated_pixels = data['annotatedPixels']
+        gci.foreground_pixels = data['foregroundPixels']
+        gci.background_pixels = data['backgroundPixels']
+        gci.scribbles = data['scribbles']
+        gci.foreground_scribbles = data['foregroundPixels']
+        gci.background_scribbles = data['backgroundScribbles']
+        gci.submissions = data['submissions']
+        gci.first_submission_time = data['firstSubmissionTime']
+        gci.last_submission_time = data['lastSubmissionTime']
         self.session.commit()
         return gci
 
@@ -84,17 +99,21 @@ class GrabCutInteractionList(Resource):
     """Shows a list of all GrabCut interaction records, and lets you POST to add a new interaction record"""
 
     @api.doc('list_gcinteractions')
-    @api.marshal_list_with(gc)
+    @api.marshal_list_with(interaction_record_fields)
     def get(self):
         '''List all interaction records'''
         return DAO.grabcutinteractions()
 
-    @api.doc('create_gcinteraction')
-    @api.expect(gc)
-    @api.marshal_with(gc, code=201)
+    @api.doc('Submit user interaction record and perform segmentation for given image and annotation pixels.')
+    @api.expect(segmentation_fields)
     def post(self):
-        '''Create a new GrabCut interaction record'''
-        return DAO.create(api.payload), 201
+        '''Create a new GrabCut interaction record and perform segmentation'''
+        data = request.json
+        interaction_record = data['interactionRecord']
+        scribble_pixels = data['scribblePixels']
+        target_image_id = interaction_record['imageId']
+        current_app.logger.info("Creating GrabCutInteraction record: {}".format(scribble_pixels[0]['y']))
+        return {'test': 'y of first point: {}'.format(scribble_pixels[0]['y'])}, 201
 
 
 @api.route('/<int:id>')
@@ -104,7 +123,7 @@ class GrabCutInteraction(Resource):
     '''Show or delete a single GrabCut interaction record'''
 
     @api.doc('get_grabcutinteraction')
-    @api.marshal_with(gc)
+    @api.marshal_with(interaction_record_fields)
     def get(self, id):
         '''Fetch a given resource'''
         return DAO.get(id)
@@ -116,8 +135,8 @@ class GrabCutInteraction(Resource):
         DAO.delete(id)
         return '', 204
 
-    @api.expect(gc)
-    @api.marshal_with(gc)
+    @api.expect(interaction_record_fields)
+    @api.marshal_with(interaction_record_fields)
     def put(self, id):
         '''Update a task given its identifier'''
         return DAO.update(id, api.payload)

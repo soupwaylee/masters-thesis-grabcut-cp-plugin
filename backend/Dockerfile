@@ -19,4 +19,4 @@ WORKDIR /usr/src/app/src
 EXPOSE 5000
 ENV SCRIPT_NAME="/grabcut" PORT="5000" FLASK_APP="app:app"
 
-ENTRYPOINT flask db upgrade && flask db migrate && flask db upgrade && gunicorn --reload --reload-engine=poll app:app
+ENTRYPOINT flask db upgrade && flask db migrate && flask db upgrade && gunicorn --reload --reload-engine=poll --timeout $CP_DEV_GUNICORN_TIMEOUT app:app

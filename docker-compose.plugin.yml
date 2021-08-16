@@ -36,9 +36,10 @@ services:
             - PGUSER=postgres
             - PGPASSWORD=postgres
             - PGPORT=5432
-            - CP_DEV_VSCODEDEBUG_HOST=${CP_DEV_VSCODEDEBUG_HOST}
-            - CP_DEV_VSCODEDEBUG_PORT=${CP_DEV_VSCODEDEBUG_PORT}
-            - CP_DEV_PYCHARMDEBUG_TARGET=${CP_DEV_PYCHARMDEBUG_TARGET}
+            - CP_DEV_VSCODEDEBUG_HOST
+            - CP_DEV_VSCODEDEBUG_PORT
+            - CP_DEV_PYCHARMDEBUG_TARGET
+            - CP_DEV_GUNICORN_TIMEOUT=${CP_DEV_GUNICORN_TIMEOUT:-30}
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.cp-plugin-grabcut-backend.rule=PathPrefix(`/grabcut`)"

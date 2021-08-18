@@ -16,3 +16,4 @@ features:
   # List features, that are not relevant for this plugin/component
   # (i.e. don't need to be considered for manual patching)
   irrelevant:
+    - v2021-08-18-1

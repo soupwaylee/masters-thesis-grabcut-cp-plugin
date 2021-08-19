@@ -1,33 +1,32 @@
 import axios from 'axios';
 
-import store from '../store';
-
 const APIBaseURL = '/grabcut';
 
 export class APIService {
 
-    constructor() {
-        // this.store = store;
+  constructor() {
+    this.instance = axios.create({
+      baseURL: APIBaseURL,
+      timeout: 1000 * 5,
+    });
+  }
 
-        this.instance = axios.create({
-            baseURL: APIBaseURL,
-            timeout: 1000 * 5,
-        });
-    }
+  getDHMImage(imageID) {
+    return this.instance.get(`/dhmimages/${imageID}`).then(response => response.data);
+  }
 
-    getTodos() {
-        return this.instance.get('todos/').then( response => response.data );
-    }
+  segmentImage(interactionRecord, scribbleContext) {
+    const {scribbleIndices, scribbleTypes} = scribbleContext;
 
-    newTodo(task) {
-        return this.instance.post('todos/', {'task': task}).then( response => response.data );
-    }
-
-    deleteTodo(id) {
-        return this.instance.delete(`todos/${id}`)
-    }
-
-    getDHMImage(id) {
-        return this.instance.get(`/dhmimages/${id}`).then( response => response.data );
-    }
+    return this.instance.post(
+      '/gcsegmentation',
+      {
+        'interactionRecord': interactionRecord,
+        'annotatedPixelIndices': scribbleIndices,
+        'annotatedPixelTypes': scribbleTypes,
+      }
+    ).then(
+      response => response.data
+    );
+  }
 }

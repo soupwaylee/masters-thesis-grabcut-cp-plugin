@@ -2,6 +2,7 @@ from flask_restx import Namespace, Resource, fields
 from flask import abort, current_app, request
 from models.grabcutinteraction import GrabCutInteractionModel
 from db import db
+from utils.grabcut_segmentation import GrabCutSegmenter
 
 api = Namespace('grabcutinteractions', description='GrabCutInteraction operations')
 
@@ -15,23 +16,18 @@ interaction_record_fields = api.model('GrabCutInteraction', {
     'foregroundPixels': fields.Integer(description='number of foreground pixels that had been marked'),
     'backgroundPixels': fields.Integer(description='number of background pixels that had been marked'),
     'scribbles': fields.Integer(description='total number of scribbles created by the user'),
-    'foregroundScribbles': fields.Integer(description=''),
+    'foregroundScribbles': fields.Integer(description='total number of foreground scribbles created by the user'),
     'backgroundScribbles': fields.Integer(description='total number of background scribbles created by the user'),
     'submissionIndex': fields.Integer(description='submission counter'),
-    'submissionTime': fields.DateTime(description='GrabCut segmentation request timestamp',
-                                      dt_format='rfc822'),
+    'firstInteractionTime': fields.DateTime(description='timestamp for first ever mousedown event on current image',
+                                            dt_format='rfc822'),
+    'submissionTime': fields.DateTime(description='GrabCut segmentation request timestamp', dt_format='rfc822'),
 })
 
-scribble_pixel_fields = api.model('ScribblePixel', {
-    'x': fields.Integer(description='x-Coordinate for the pixel'),
-    'y': fields.Integer(description='y-Coordinate for the pixel'),
-    'type': fields.Integer(description='1 for foreground and 0 for background respectively',
-                           min=0, max=1)
-})
-
-segmentation_fields = api.model('ScribblePixelsList', {
+segmentation_fields = api.model('Segmentation', {
     'interactionRecord': fields.Nested(interaction_record_fields, skip_none=True),
-    'scribblePixels': fields.List(fields.Nested(scribble_pixel_fields))
+    'annotatedPixelIndices': fields.List(fields.Integer),  # (description='Index of flattened mask')
+    'annotatedPixelTypes': fields.List(fields.Boolean)  # (description='True if foreground else background')
 })
 
 
@@ -60,11 +56,11 @@ class GrabCutInteractionDAO(object):
             foreground_pixels=data['foregroundPixels'],
             background_pixels=data['backgroundPixels'],
             scribbles=data['scribbles'],
-            foreground_scribbles=data['foregroundPixels'],
+            foreground_scribbles=data['foregroundScribbles'],
             background_scribbles=data['backgroundScribbles'],
-            submissions=data['submissions'],
-            first_submission_time=data['firstSubmissionTime'],
-            last_submission_time=data['lastSubmissionTime']
+            submission_counter=data['submissionIndex'],
+            first_interaction_time=data['firstInteractionTime'],
+            submission_time=data['submissionTime']
         )
         self.session.add(gci)
         self.session.commit()
@@ -72,17 +68,17 @@ class GrabCutInteractionDAO(object):
 
     def update(self, id, data):
         gci = self.session.query(GrabCutInteractionModel).get(id)
-        gci.session_id =data['sessionId']
+        gci.session_id = data['sessionId']
         gci.image_id = data['imageId']
         gci.annotated_pixels = data['annotatedPixels']
         gci.foreground_pixels = data['foregroundPixels']
         gci.background_pixels = data['backgroundPixels']
-        gci.scribbles = data['scribbles']
-        gci.foreground_scribbles = data['foregroundPixels']
-        gci.background_scribbles = data['backgroundScribbles']
-        gci.submissions = data['submissions']
-        gci.first_submission_time = data['firstSubmissionTime']
-        gci.last_submission_time = data['lastSubmissionTime']
+        gci.scribbles = data['scribbles'],
+        gci.foreground_scribbles = data['foregroundScribbles'],
+        gci.background_scribbles = data['backgroundScribbles'],
+        gci.submission_counter = data['submissionIndex'],
+        gci.first_interaction_time = data['firstInteractionTime'],
+        gci.submission_time = data['submissionTime']
         self.session.commit()
         return gci
 
@@ -110,10 +106,12 @@ class GrabCutInteractionList(Resource):
         '''Create a new GrabCut interaction record and perform segmentation'''
         data = request.json
         interaction_record = data['interactionRecord']
-        scribble_pixels = data['scribblePixels']
-        target_image_id = interaction_record['imageId']
-        current_app.logger.info("Creating GrabCutInteraction record: {}".format(scribble_pixels[0]['y']))
-        return {'test': 'y of first point: {}'.format(scribble_pixels[0]['y'])}, 201
+        annotated_pixel_indices = data['annotatedPixelIndices']
+        annotated_pixel_types = data['annotatedPixelTypes']
+        scribble_mask = GrabCutSegmenter.pixels_to_gc_classes_array(annotated_pixel_indices, annotated_pixel_types)
+        # print("is foreground: {}".format(scribble_pixels[0]['type'] == 1), flush=True)
+        return {'test': 'pixel 0 type: ({}), [0, 20]: {}'.format(annotated_pixel_types[0],
+                                                                 scribble_mask[0, 20])}, 201
 
 
 @api.route('/<int:id>')

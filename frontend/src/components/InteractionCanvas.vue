@@ -9,12 +9,15 @@
 
 <script>
 import colormap from "colormap";
-import {APIService as grabcutAPIService} from "../api/grabcutAPI";
+import {mapGetters, mapActions} from 'vuex';
+import {colorToPixelType, getImageDataURIFromDataArray, pixelTypeToColor} from "@/helpers/canvas";
+import {APIService as grabcutAPIService} from "@/api/grabcutAPI";
 
 const grabcutAS = new grabcutAPIService();
 
 export default {
   name: 'InteractionCanvas',
+
   data() {
     return {
       dhmImageSrc: '',
@@ -31,27 +34,19 @@ export default {
       pointsPerScribble: []
     };
   },
+
   computed: {
-    brushType() {
-      return this.$store.getters.getBrushType;
-    },
-
-    brushSize() {
-      return this.$store.getters.getBrushSize;
-    },
-
-    selectedStrokeColor() {
-      return (this.brushType === 'fg') ? 'rgba(255, 0, 0, 1)' : 'rgba(0, 0, 255, 1)'
-    }
+    ...mapGetters({
+      isFirstInteraction: 'getCurrentImageFirstInteraction',
+      getBrushType: 'getBrushType',
+      getBrushSize: 'getBrushSize'
+    }),
   },
+
   async created() {
-    this.loadImage()
-      .catch(e => {
-          //TODO implement better error handling here later
-          console.log(`Problem: ${e}`)
-        }
-      )
+    await this.loadImage();
   },
+
   mounted() {
     const canvas = this.$refs.canvas;
     this.canvasCtx = canvas.getContext('2d');
@@ -62,36 +57,56 @@ export default {
     window.addEventListener('resize', this.resize);
     this.resize();
   },
+
   methods: {
+    ...mapActions([
+      'incrementScribbleCount',
+      'decrementScribbleCount',
+      'resetScribbleCount',
+      'timeImageInteractionStarting',
+      'setIsFirstInteractionFlag',
+      'incrementSubmissionCounter',
+      'punchInSegmentationTime',
+      // 'setPreviousScribbleType',
+    ]),
+
     clearDrawings() {
       this.canvasCtx.clearRect(0, 0, this.canvasCtx.canvas.width, this.canvasCtx.canvas.height);
       this.points = [];
       this.redoStack = [];
       this.pointsPerScribble = [];
+      this.resetScribbleCount();
+      this.$store.dispatch('setPreviousScribbleType', null);
     },
 
     setUpBrush() {
       this.canvasCtx.lineCap = 'square';
-      if (this.canvasCtx.lineWidth !== this.brushSize) {
-        this.canvasCtx.lineWidth = this.brushSize;
+      if (this.canvasCtx.lineWidth !== this.getBrushSize) {
+        this.canvasCtx.lineWidth = this.getBrushSize;
       }
-      if (this.canvasCtx.strokeStyle !== this.selectedStrokeColor) {
-        this.canvasCtx.strokeStyle = (this.brushType === 'fg') ? 'rgba(255, 0, 0, 1)' : 'rgba(0, 0, 255, 1)';
+      if (this.canvasCtx.strokeStyle !== pixelTypeToColor[this.getBrushType]) {
+        this.canvasCtx.strokeStyle = pixelTypeToColor[this.getBrushType];
       }
     },
 
     repositionMouse(e) {
-      let { left, top } = this.$refs.canvas.getBoundingClientRect();
+      let {left, top} = this.$refs.canvas.getBoundingClientRect();
       this.mouseX = parseInt(e.clientX - left);
       this.mouseY = parseInt(e.clientY - top);
     },
 
     startMousePath(e) {
+      if (this.isFirstInteraction) {
+        this.timeImageInteractionStarting();
+        this.setIsFirstInteractionFlag(false);
+      }
+
       this.setUpBrush();
       this.$refs.canvas.addEventListener('mousemove', this.draw);
       this.repositionMouse(e);
       this.pointsPerScribble.push(0);
       this.addPointToCurrentStroke("begin");
+      this.incrementScribbleCount();
     },
 
     stopMousePath() {
@@ -101,11 +116,8 @@ export default {
       this.$refs.canvas.removeEventListener('mousemove', this.draw);
       this.addPointToCurrentStroke("end");
       this.drawing = false;
-      // console.log(e.buttons);
-      // console.log(e.type);
-      let reducer = (acc, curr) => acc + curr;
-      console.log(`Scribbles: ${this.pointsPerScribble.length}`);
-      console.log(`Points: ${this.points.length}`);
+
+      this.$store.dispatch('setPreviousScribbleType', this.getBrushType);
     },
 
     draw(e) {
@@ -127,13 +139,15 @@ export default {
     },
 
     addPointToCurrentStroke(trigger) {
-      this.points.push({
-        x: this.mouseX,
-        y: this.mouseY,
-        size: this.brushSize,
-        color: this.canvasCtx.strokeStyle,
-        trigger: trigger
-      });
+      const point = {
+        'x': this.mouseX,
+        'y': this.mouseY,
+        'size': this.getBrushSize,
+        'color': this.canvasCtx.strokeStyle,
+        'trigger': trigger,
+      };
+
+      this.points.push(point);
 
       this.pointsPerScribble[this.pointsPerScribble.length - 1]++;
     },
@@ -159,6 +173,7 @@ export default {
         this.canvasCtx.lineTo(point.x, point.y);
         if (point.trigger === 'end' || (i === this.points.length - 1)) {
           this.canvasCtx.stroke();
+          this.$store.dispatch('setPreviousScribbleType', colorToPixelType[point.color]);
         }
       }
     },
@@ -167,50 +182,53 @@ export default {
       if (this.pointsPerScribble.length === 0 || this.points.length === 0) return;
 
       let undoScribbleLength = this.pointsPerScribble.pop();
-      while (undoScribbleLength > 0) {
-        let pt = this.points.pop();
-        // this.redoStack.unshift(pt); TODO: unshift the discarded points to the redo stack
-        undoScribbleLength -= 1;
-      }
-
+      this.points.splice(-undoScribbleLength);
+      this.$store.dispatch('decrementScribbleCount');
       this.redrawAllPoints();
     },
 
     async loadImage() {
-      let currentImgIdx = 1;
-      let pendingDHMImage = grabcutAS.getDHMImage(currentImgIdx);
-      //     .then( (data) => {
-      //        phaseImgDataArray = data;
-      //        console.log(`Loaded ${phaseImgDataArray.length} long list.`);
-      //      });
+      let currentImgId = 1;  //TODO fix this hard-coded index
 
-      const dhmCanvas = document.createElement('canvas');
-      dhmCanvas.width = this.width;
-      dhmCanvas.height = this.height;
-
-      const dhmCtx = dhmCanvas.getContext('2d');
-      const dhmImgData = dhmCtx.getImageData(0, 0, dhmCanvas.width, dhmCanvas.height);
-
-      //TODO offer multiple options for color picking
       let colors = colormap({
-        colormap: 'jet',
-        nshades: 255,
-        format: 'rgba',
-        alpha: 1
-      })
+        'colormap': 'jet',
+        'nshades': 255,
+        'format': 'rgba',
+        'alpha': 1
+      });
 
-      let phaseImgDataArray = await pendingDHMImage;
-      for (const [idx, intVal] of phaseImgDataArray.entries()) {
-        let imgDataOffset = idx * 4;
+      await grabcutAS.getDHMImage(currentImgId).then(imageDataArray => {
+        this.dhmImageSrc = getImageDataURIFromDataArray(imageDataArray, colors, this.width, this.height);
+      }, error => {
+        console.error(error);
+      });
+    },
 
-        dhmImgData.data[imgDataOffset] = colors[intVal][0];
-        dhmImgData.data[imgDataOffset + 1] = colors[intVal][1];
-        dhmImgData.data[imgDataOffset + 2] = colors[intVal][2];
-        dhmImgData.data[imgDataOffset + 3] = 255; // fully opaque
-      }
+    hasScribbles() {
+      let isPixelWhite = (elt, idx, arr) => {
+        if (idx % 4 === 0) {
+          return arr[idx] === 0
+            && arr[idx + 1] === 0
+            && arr[idx + 2] === 0
+            && arr[idx + 3] === 255;
+        }
+      };
 
-      dhmCtx.putImageData(dhmImgData, 0, 0);
-      this.dhmImageSrc = dhmCanvas.toDataURL();
+      return this.canvasCtx.getImageData(
+        0,
+        0,
+        this.canvasCtx.canvas.width,
+        this.canvasCtx.canvas.height).every(isPixelWhite);
+    },
+
+    segment() {
+      this.incrementSubmissionCounter();
+      this.punchInSegmentationTime();
+      this.$store.dispatch('getSegmentation',
+        this.canvasCtx.getImageData(0, 0,
+          this.canvasCtx.canvas.width,
+          this.canvasCtx.canvas.height).data
+      );
     }
   }
 }

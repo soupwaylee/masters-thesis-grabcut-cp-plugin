@@ -19,6 +19,7 @@ from migrate import migrate
 
 def create_app(config=None):
     app = Flask(__name__)
+    # fileConfig('logging.conf')
 
     if config == "testing":
         env_config = "config.TestingConfig"
@@ -30,21 +31,17 @@ def create_app(config=None):
 
     # Register API
     api.init_app(app)
+    app.logger.info('Registered apis')
 
     # Register DB
     db.init_app(app)
+    app.logger.info('Registered db')
 
     # Register Flask-Migrate to handle database migrations
     migrate.init_app(app, db)
+    app.logger.info('Registered flask migrate')
 
     return app
-
-#TODO
-# implement DHM image handling in apis package
-# phase_images = np.load('images')
-
-#TODO
-# implement GrabCut RPC in apis package
 
 
 app = create_app()

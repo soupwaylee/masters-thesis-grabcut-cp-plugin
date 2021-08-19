@@ -44,9 +44,9 @@ class GrabCutInteractionModel(db.Model):
     scribbles = db.Column(db.Integer)
     foreground_scribbles = db.Column(db.Integer)
     background_scribbles = db.Column(db.Integer)
-    submissions = db.Column(db.Integer)
-    first_submission_time = db.Column(db.DateTime)
-    last_submission_time = db.Column(db.DateTime)
+    submission_counter = db.Column(db.Integer)
+    first_interaction_time = db.Column(db.DateTime)
+    submission_time = db.Column(db.DateTime)
 
     def __repr__(self):
         return "<GrabCutInteraction session {} for image {}>".format(self.session_id, self.image_id)

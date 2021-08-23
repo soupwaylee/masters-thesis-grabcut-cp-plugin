@@ -19,7 +19,7 @@ export class APIService {
     const {scribbleIndices, scribbleTypes} = scribbleContext;
 
     return this.instance.post(
-      '/gcsegmentation',
+      '/gcsegmentation/',
       {
         'interactionRecord': interactionRecord,
         'annotatedPixelIndices': scribbleIndices,

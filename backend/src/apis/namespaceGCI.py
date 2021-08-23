@@ -1,33 +1,51 @@
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Namespace, Resource, fields, marshal
 from flask import abort, current_app, request
 from models.grabcutinteraction import GrabCutInteractionModel
 from db import db
+from sqlalchemy import exc
 from utils.grabcut_segmentation import GrabCutSegmenter
+from utils.dhm_phase_images import ImageHandler
+
 
 api = Namespace('grabcutinteractions', description='GrabCutInteraction operations')
 
 interaction_record_fields = api.model('GrabCutInteraction', {
-    'id': fields.String(description='UUID for the GrabCut interaction record'),
-    'sessionId': fields.String(required=True, description='ID for the labeling session'),
+    'id': fields.String(description='UUID for the GrabCut interaction record', attribute=''),
+    'sessionId': fields.String(required=True, description='ID for the labeling session', attribute='session_id'),
     'imageId': fields.Integer(required=True,
-                              description='ID for the image that had been '
-                                          'labelled for the current record'),
-    'annotatedPixels': fields.Integer(description='number of pixels that had been annotated by the user'),
-    'foregroundPixels': fields.Integer(description='number of foreground pixels that had been marked'),
-    'backgroundPixels': fields.Integer(description='number of background pixels that had been marked'),
-    'scribbles': fields.Integer(description='total number of scribbles created by the user'),
-    'foregroundScribbles': fields.Integer(description='total number of foreground scribbles created by the user'),
-    'backgroundScribbles': fields.Integer(description='total number of background scribbles created by the user'),
-    'submissionIndex': fields.Integer(description='submission counter'),
+                              description='ID for the image that had been labelled for the current record',
+                              attribute='image_id'),
+    'annotatedPixels': fields.Integer(description='number of pixels that had been annotated by the user',
+                                      attribute='annotated_pixels'),
+    'foregroundPixels': fields.Integer(description='number of foreground pixels that had been marked',
+                                       attribute='foreground_pixels'),
+    'backgroundPixels': fields.Integer(description='number of background pixels that had been marked',
+                                       attribute='background_pixels'),
+    'scribbles': fields.Integer(description='total number of scribbles created by the user',
+                                attribute='scribbles'),
+    'foregroundScribbles': fields.Integer(description='total number of foreground scribbles created by the user',
+                                          attribute='foreground_scribbles'),
+    'backgroundScribbles': fields.Integer(description='total number of background scribbles created by the user',
+                                          attribute='background_scribbles'),
+    'submissionIndex': fields.Integer(description='submission counter',
+                                      attribute='submission_counter'),
     'firstInteractionTime': fields.DateTime(description='timestamp for first ever mousedown event on current image',
-                                            dt_format='rfc822'),
-    'submissionTime': fields.DateTime(description='GrabCut segmentation request timestamp', dt_format='rfc822'),
+                                            dt_format='rfc822',
+                                            attribute='first_interaction_time'),
+    'submissionTime': fields.DateTime(description='GrabCut segmentation request timestamp',
+                                      dt_format='rfc822',
+                                      attribute='submission_time'),
 })
 
 segmentation_fields = api.model('Segmentation', {
     'interactionRecord': fields.Nested(interaction_record_fields, skip_none=True),
     'annotatedPixelIndices': fields.List(fields.Integer),  # (description='Index of flattened mask')
     'annotatedPixelTypes': fields.List(fields.Boolean)  # (description='True if foreground else background')
+})
+
+segmentation_post_response_fields = api.model('SegmentationResponse', {
+    'interactionRecord': fields.Nested(interaction_record_fields, skip_none=True),
+    'maskDataArray': fields.List(fields.Boolean)
 })
 
 
@@ -46,8 +64,7 @@ class GrabCutInteractionDAO(object):
             api.abort(404, f'GrabCut Interaction record {id} does not exist')
 
     def create(self, data):
-        interaction_record = data['interactionRecord']
-        current_app.logger.info(f"Creating GrabCutInteraction record: {str(interaction_record)}")
+        current_app.logger.info(f"Creating GrabCutInteraction record: {str(data)}")
         # TODO perform db connection & segmentation asynchronously?
         gci = GrabCutInteractionModel(
             session_id=data['sessionId'],
@@ -97,44 +114,65 @@ class GrabCutInteractionList(Resource):
     @api.doc('list_gcinteractions')
     @api.marshal_list_with(interaction_record_fields)
     def get(self):
-        '''List all interaction records'''
+        """List all interaction records"""
         return DAO.grabcutinteractions()
 
     @api.doc('Submit user interaction record and perform segmentation for given image and annotation pixels.')
     @api.expect(segmentation_fields)
     def post(self):
-        '''Create a new GrabCut interaction record and perform segmentation'''
+        """Create a new GrabCut interaction record and perform segmentation"""
         data = request.json
+
         interaction_record = data['interactionRecord']
         annotated_pixel_indices = data['annotatedPixelIndices']
         annotated_pixel_types = data['annotatedPixelTypes']
-        scribble_mask = GrabCutSegmenter.pixels_to_gc_classes_array(annotated_pixel_indices, annotated_pixel_types)
-        # print("is foreground: {}".format(scribble_pixels[0]['type'] == 1), flush=True)
-        return {'test': 'pixel 0 type: ({}), [0, 20]: {}'.format(annotated_pixel_types[0],
-                                                                 scribble_mask[0, 20])}, 201
+
+        target_image_index = interaction_record['imageId']
+        target_image = ImageHandler.get_image(target_image_index)
+
+        try:
+            gc_mask = GrabCutSegmenter.gc_segment(
+                target_image,
+                annotated_pixel_indices,
+                annotated_pixel_types)
+        except RuntimeError as err:
+            return f'RuntimeError: {err}', 404
+
+        try:
+            gci = DAO.create(interaction_record)
+        except exc.SQLAlchemyError as err:
+            return f'DB error: {err}', 404
+
+        return marshal(
+            {
+                'interactionRecord': gci,
+                'maskDataArray': gc_mask
+            },
+            segmentation_post_response_fields,
+        ), 201
 
 
 @api.route('/<int:id>')
 @api.response(404, 'Interaction record not found')
 @api.param('id', 'The interaction record identifier')
 class GrabCutInteraction(Resource):
-    '''Show or delete a single GrabCut interaction record'''
+    """Show or delete a single GrabCut interaction record"""
 
     @api.doc('get_grabcutinteraction')
     @api.marshal_with(interaction_record_fields)
     def get(self, id):
-        '''Fetch a given resource'''
+        """Fetch a given resource"""
         return DAO.get(id)
 
     @api.doc('delete_grabcutinteraction')
     @api.response(204, 'GrabCut interaction record deleted')
     def delete(self, id):
-        '''Delete a GrabCut interaction record given its identifier'''
+        """Delete a GrabCut interaction record given its identifier"""
         DAO.delete(id)
         return '', 204
 
     @api.expect(interaction_record_fields)
     @api.marshal_with(interaction_record_fields)
     def put(self, id):
-        '''Update a task given its identifier'''
+        """Update a task given its identifier"""
         return DAO.update(id, api.payload)

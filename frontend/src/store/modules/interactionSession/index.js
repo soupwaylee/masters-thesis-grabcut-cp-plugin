@@ -3,7 +3,7 @@ const state = {
   sessionId: "",
   currentImageIndex: 0,
   currentImageFirstInteraction: true,
-  currentImageStartingTime: null,
+  currentImageInteractionStartingTime: null,
   previousScribbleType: null,
   scribbles: 0,
   foregroundScribbles: 0,
@@ -25,7 +25,7 @@ const mutations = {
   },
 
   SET_CURRENT_IMAGE_STARTED_AT(state, payload) {
-    state.currentImageStartingTime = payload.currentImageStartingTime;
+    state.currentImageInteractionStartingTime = payload.interactionStartingTime;
   },
 
   SET_PREVIOUS_SCRIBBLE_TYPE(state, payload) {
@@ -85,7 +85,7 @@ const actions = {
     let rightNowUTC = now.toUTCString();
     commit({
       type: 'SET_CURRENT_IMAGE_STARTED_AT',
-      currentImageStartingTime: rightNowUTC,
+      interactionStartingTime: rightNowUTC,
     });
   },
 

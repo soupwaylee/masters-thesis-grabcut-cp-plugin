@@ -12,7 +12,7 @@ function pixelDataToRgba(r, g, b, a) {
   return `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(2)})`;
 }
 
-function getImageDataURIFromDataArray(imageDataArray, colormap, width, height) {
+function getImageDataURIFromDataArray(imageDataArray, colormap, width=512, height=384) {
   const canvasElement = document.createElement('canvas');
   canvasElement.width = width;
   canvasElement.height = height;
@@ -101,11 +101,18 @@ function getScribblePixelCount(scribbleIndices, scribbleTypes) {
   };
 }
 
+function booleanMaskArrayToIntImageDataArray(mask, fg=255, bg=0) {
+  return mask.map(isFg => {
+    return isFg ? fg : bg;
+  });
+}
+
 export {
   colorToPixelType,
   pixelTypeToColor,
   pixelDataToRgba,
   getImageDataURIFromDataArray,
   getScribbleMaskContext,
-  getScribblePixelCount
+  getScribblePixelCount,
+  booleanMaskArrayToIntImageDataArray,
 };

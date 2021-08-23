@@ -6,6 +6,16 @@ import logging
 
 log = logging.getLogger('app.sub')
 
+"""
+```
+cv::GrabCutClasses {
+  cv::GC_BGD = 0,
+  cv::GC_FGD = 1,
+  cv::GC_PR_BGD = 2,
+  cv::GC_PR_FGD = 3
+}
+```
+"""
 
 class GrabCutSegmenter:
     img_shape = (384, 512)
@@ -51,8 +61,9 @@ class GrabCutSegmenter:
                 iter_count,
                 cv.GC_INIT_WITH_MASK
             )
-            mask_contrast_8bit = np.where((grabcut_result == 2) | (grabcut_result == 0), 0, 255).astype('uint8')
-            return mask_contrast_8bit
-        except Exception:
+            # mask_contrast_8bit = np.where((grabcut_result == 2) | (grabcut_result == 0), 0, 255).astype('uint8')
+            mask_boolean = np.where((grabcut_result == 2) | (grabcut_result == 0), False, True).astype('bool')
+            return np.ravel(mask_boolean).tolist()
+        except Exception as exc:
             current_app.logger.err('Error during GrabCut segmentation', exc_info=True)
-            raise
+            raise RuntimeError('Failed to perform GrabCut') from exc

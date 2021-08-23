@@ -11,11 +11,11 @@ class ImageHandler:
 
     @staticmethod
     def get_image(img_id):
-        return ImageHandler.images.get(img_id, None)
+        return ImageHandler.images.get(f'{img_id}', None)
 
     @staticmethod
     def get_image_as_response(img_id):
-        result = ImageHandler.get_image(img_id)
+        result = ImageHandler.get_image(f'{img_id}')
         if result is not None:
             return np.ravel(result).tolist()
 

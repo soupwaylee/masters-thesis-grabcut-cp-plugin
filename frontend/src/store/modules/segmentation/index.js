@@ -1,32 +1,40 @@
 import {APIService as grabcutAPIService} from "@/api/grabcutAPI";
-import {getScribbleMaskContext, getScribblePixelCount} from "@/helpers/canvas";
+import {
+  getScribbleMaskContext,
+  getScribblePixelCount,
+  booleanMaskArrayToIntImageDataArray,
+  getImageDataURIFromDataArray
+} from "@/helpers/canvas";
 
-// const grabcutAS = new grabcutAPIService();
+const grabcutService = new grabcutAPIService();
 
 const state = {
   /**
-   * {
-   *   "segmentationImageSrc": String,
-   *   "thumbnailImageSrc": String,
-   *   "segmentationMethod": String
-   * }
+   * @typedef {Object} SegmentationContext
+   * @property {number} dataUri Data URI representation of the segmentation mask
+   *                            given the colormap defined in the InteractionCanvas
+   * @property {string} submissionTime Annotation submission timestamp
    */
-  segmentations: [],
+  segmentationContexts: [],
 };
 
 const mutations = {
+  ADD_SEGMENTATION_CONTEXT(state, payload) {
+    state.segmentationContexts.push(payload.maskContext);
+  },
 };
 
 const actions = {
-  getSegmentation({ state, commit, rootState }, imageData) {
+  async getSegmentation({commit, rootState}, {imageData, colors}) {
     const interactionSessionState = rootState.interactionSessionModule;
 
     let {scribbleIndices, scribbleTypes} = getScribbleMaskContext(imageData);
     let {pixelCount, fgPixelCount, bgPixelCount} = getScribblePixelCount(scribbleIndices, scribbleTypes);
+    let imageId = interactionSessionState.testImages[interactionSessionState.currentImageIndex];
 
     let interactionRecord = {
       'sessionId': interactionSessionState.sessionId,
-      'imageId': interactionSessionState.currentImageIndex,
+      'imageId': imageId,
       "scribbles": interactionSessionState.scribbles,
       "foregroundScribbles": interactionSessionState.foregroundScribbles,
       "backgroundScribbles": interactionSessionState.backgroundScribbles,
@@ -34,16 +42,35 @@ const actions = {
       "foregroundPixels": fgPixelCount,
       "backgroundPixels": bgPixelCount,
       "submissionIndex": interactionSessionState.submissionCounter,
+      "firstInteractionTime": interactionSessionState.currentImageInteractionStartingTime,
       "submissionTime": interactionSessionState.segmentationRequestTime,
     }
 
     console.table(interactionRecord);
-    // grabcutAS.segmentImage()
+
+    await grabcutService
+      .segmentImage(interactionRecord, {scribbleIndices, scribbleTypes})
+      .then(response => {
+        const submissionTime = response.interactionRecord.submissionTime;
+        const maskIntDataArray = booleanMaskArrayToIntImageDataArray(response.maskDataArray);
+
+        const segmentationMaskContext = {
+          dataUri: getImageDataURIFromDataArray(maskIntDataArray, colors),
+          submissionTime: submissionTime,
+        };
+
+        commit({
+          type: 'ADD_SEGMENTATION_CONTEXT',
+          maskContext: segmentationMaskContext
+        });
+      }, error => {
+        console.error(error);
+      });
   },
 };
 
 const getters = {
-
+  getSegmentationContexts: state => state.segmentationContexts,
 };
 
 const segmentationModule = {

@@ -20,6 +20,18 @@ export default {
 
   data() {
     return {
+      dhmColorSpace: colormap({
+        'colormap': 'jet',
+        'nshades': 256,
+        'format': 'rgba',
+        'alpha': 1,
+      }),
+      maskColorSpace: colormap({
+        'colormap': 'viridis',
+        'nshades': 256,
+        'format': 'rgba',
+        'alpha': 1,
+      }),
       dhmImageSrc: '',
       canvasCtx: null,
       width: 512,
@@ -224,11 +236,10 @@ export default {
     segment() {
       this.incrementSubmissionCounter();
       this.punchInSegmentationTime();
-      this.$store.dispatch('getSegmentation',
-        this.canvasCtx.getImageData(0, 0,
-          this.canvasCtx.canvas.width,
-          this.canvasCtx.canvas.height).data
-      );
+      this.$store.dispatch('getSegmentation', {
+        imageData: this.canvasCtx.getImageData(0, 0, this.width, this.height).data,
+        colors: this.maskColorSpace,
+      });
     }
   }
 }

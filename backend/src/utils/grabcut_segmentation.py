@@ -52,7 +52,7 @@ class GrabCutSegmenter:
         try:
             bgd_model = np.zeros((1, 65), np.float64)
             fgd_model = np.zeros((1, 65), np.float64)
-            grabcut_result, bgdModel, fgdModel = cv.grabCut(
+            grabcut_result, bgd_model, bgd_model = cv.grabCut(
                 target_img_3c,
                 manual_mask,
                 None,

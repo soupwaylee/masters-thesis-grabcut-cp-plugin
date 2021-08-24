@@ -71,6 +71,9 @@ const actions = {
 
 const getters = {
   getSegmentationContexts: state => state.segmentationContexts,
+  hasSegmentations: state => state.segmentationContexts.length !== 0,
+  getSegmentationCounter: state => state.segmentationContexts.length,
+  getLatestSegmentation: state => state.segmentationContexts[state.segmentationContexts.length - 1],
 };
 
 const segmentationModule = {

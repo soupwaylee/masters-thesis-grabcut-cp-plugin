@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+import {createApp} from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
@@ -7,19 +7,21 @@ import PrimeVue from 'primevue/config';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Card from 'primevue/card';
+import Checkbox from 'primevue/checkbox';
 import Dialog from 'primevue/dialog';
+import Dropdown from 'primevue/dropdown';
+import ProgressBar from 'primevue/progressbar';
 import RadioButton from 'primevue/radiobutton';
 import Slider from 'primevue/slider';
 import SelectButton from 'primevue/selectbutton';
 import DataView from 'primevue/dataview';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import ColumnGroup from 'primevue/columngroup';     //optional for column grouping
-
+import ColumnGroup from 'primevue/columngroup'; //optional for column grouping
 import 'primevue/resources/themes/saga-blue/theme.css';
 import 'primevue/resources/primevue.min.css';
 import 'primeicons/primeicons.css';
-import 'primeflex/primeflex.css' 
+import 'primeflex/primeflex.css'
 
 const app = createApp(App)
 
@@ -30,6 +32,7 @@ app.use(PrimeVue)
 app.component('Button', Button)
 app.component('InputText', InputText)
 app.component('Card', Card)
+app.component('Checkbox', Checkbox)
 app.component('Dialog', Dialog)
 app.component('RadioButton', RadioButton)
 app.component('Slider', Slider)
@@ -38,5 +41,7 @@ app.component('DataView', DataView)
 app.component('DataTable', DataTable)
 app.component('Column', Column)
 app.component('ColumnGroup', ColumnGroup)
+app.component('ProgressBar', ProgressBar)
+app.component('Dropdown', Dropdown)
 
 app.mount('#app')

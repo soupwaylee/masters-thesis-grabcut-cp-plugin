@@ -2,7 +2,12 @@
   <div class="outsideWrapper">
     <div class="insideWrapper">
       <img :src="dhmImageSrc" class="baseImage" ref="dhmImg">
-      <canvas class="overlayCanvas" ref="canvas"></canvas>
+      <img v-if="displayedSegmentation"
+           :src="displayedSegmentation.dataUri"
+           :style="segmentationOverlayStyle"
+           class="segImage" ref="segImg">
+      <canvas :style="{visibility: isCanvasDisplaySelected ? 'visible' : 'hidden'}"
+        class="overlayCanvas" ref="canvas"></canvas>
     </div>
   </div>
 </template>
@@ -33,6 +38,7 @@ export default {
         'alpha': 1,
       }),
       dhmImageSrc: '',
+      segmentationSrc: '',
       canvasCtx: null,
       width: 512,
       height: 384,
@@ -43,16 +49,29 @@ export default {
       drawing: false,
       points: [],
       redoStack: [],
-      pointsPerScribble: []
+      pointsPerScribble: [],
     };
   },
 
   computed: {
     ...mapGetters({
       isFirstInteraction: 'getCurrentImageFirstInteraction',
-      getBrushType: 'getBrushType',
-      getBrushSize: 'getBrushSize'
+      brushType: 'getBrushType',
+      brushSize: 'getBrushSize',
+      segmentationContexts: 'getSegmentationContexts',
+      segmentationCounter: 'getSegmentationCounter',
+      latestSegmentation: 'getLatestSegmentation',
+      displayedSegmentation: 'getDisplayedSegmentation',
+      isCanvasDisplaySelected: 'isCanvasDisplaySelected',
+      isMaskDisplaySelected: 'isMaskDisplaySelected'
     }),
+
+    segmentationOverlayStyle() {
+      return {
+        opacity: 0.4,
+        visibility: this.isMaskDisplaySelected ? 'visible' : 'hidden',
+      };
+    }
   },
 
   async created() {
@@ -79,11 +98,14 @@ export default {
       'setIsFirstInteractionFlag',
       'incrementSubmissionCounter',
       'punchInSegmentationTime',
-      // 'setPreviousScribbleType',
+      'updateLoadingFlag',
+      'setSegmentationForDisplay',
     ]),
 
     clearDrawings() {
       this.canvasCtx.clearRect(0, 0, this.canvasCtx.canvas.width, this.canvasCtx.canvas.height);
+      this.setSegmentationForDisplay(null);
+
       this.points = [];
       this.redoStack = [];
       this.pointsPerScribble = [];
@@ -93,11 +115,11 @@ export default {
 
     setUpBrush() {
       this.canvasCtx.lineCap = 'square';
-      if (this.canvasCtx.lineWidth !== this.getBrushSize) {
-        this.canvasCtx.lineWidth = this.getBrushSize;
+      if (this.canvasCtx.lineWidth !== this.brushSize) {
+        this.canvasCtx.lineWidth = this.brushSize;
       }
-      if (this.canvasCtx.strokeStyle !== pixelTypeToColor[this.getBrushType]) {
-        this.canvasCtx.strokeStyle = pixelTypeToColor[this.getBrushType];
+      if (this.canvasCtx.strokeStyle !== pixelTypeToColor[this.brushType]) {
+        this.canvasCtx.strokeStyle = pixelTypeToColor[this.brushType];
       }
     },
 
@@ -129,7 +151,7 @@ export default {
       this.addPointToCurrentStroke("end");
       this.drawing = false;
 
-      this.$store.dispatch('setPreviousScribbleType', this.getBrushType);
+      this.$store.dispatch('setPreviousScribbleType', this.brushType);
     },
 
     draw(e) {
@@ -154,7 +176,7 @@ export default {
       const point = {
         'x': this.mouseX,
         'y': this.mouseY,
-        'size': this.getBrushSize,
+        'size': this.brushSize,
         'color': this.canvasCtx.strokeStyle,
         'trigger': trigger,
       };
@@ -195,7 +217,7 @@ export default {
 
       let undoScribbleLength = this.pointsPerScribble.pop();
       this.points.splice(-undoScribbleLength);
-      this.$store.dispatch('decrementScribbleCount');
+      this.decrementScribbleCount();
       this.redrawAllPoints();
     },
 
@@ -233,13 +255,19 @@ export default {
         this.canvasCtx.canvas.height).every(isPixelWhite);
     },
 
-    segment() {
+    async segment() {
       this.incrementSubmissionCounter();
       this.punchInSegmentationTime();
-      this.$store.dispatch('getSegmentation', {
+      this.updateLoadingFlag(true);
+
+      await this.$store.dispatch('getSegmentation', {
         imageData: this.canvasCtx.getImageData(0, 0, this.width, this.height).data,
         colors: this.maskColorSpace,
       });
+
+      this.$store.dispatch('setSegmentationForDisplay', this.latestSegmentation);
+
+      this.updateLoadingFlag(false);
     }
   }
 }
@@ -268,6 +296,14 @@ export default {
   }
 
   .overlayCanvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+  }
+
+  .segImage {
     width: 100%;
     height: 100%;
     position: absolute;

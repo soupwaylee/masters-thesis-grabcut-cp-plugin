@@ -34,7 +34,7 @@ class GrabCutSegmenter:
             gc_classes_array = np.empty(GrabCutSegmenter.img_shape, dtype=np.uint8).ravel()
             gc_classes_array.fill(cv.GC_PR_BGD)
 
-            target_gc_classes = np.empty(len(target_type))
+            target_gc_classes = np.empty(len(target_type), dtype=np.uint8)
             target_gc_classes.fill(cv.GC_BGD)
             target_gc_classes[target_type] = cv.GC_FGD
 

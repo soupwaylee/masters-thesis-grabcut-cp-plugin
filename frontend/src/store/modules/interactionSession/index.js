@@ -1,5 +1,6 @@
 const state = {
   testImages: [1, 2],
+
   sessionId: "",
   currentImageIndex: 0,
   currentImageFirstInteraction: true,
@@ -13,6 +14,8 @@ const state = {
   backgroundPixelsAtSubmission: 0,
   submissionCounter: 0,
   segmentationRequestTime: null,
+
+  isLoadingSegmentation: false,
 };
 
 const mutations = {
@@ -62,6 +65,10 @@ const mutations = {
 
   SET_SEGMENTATION_REQUEST_TIME(state, payload) {
     state.segmentationRequestTime = payload.segmentationRequestTime;
+  },
+
+  SET_IS_LOADING_SEGMENTATION(state, payload) {
+    state.isLoadingSegmentation = payload.isLoading;
   }
 };
 
@@ -179,6 +186,13 @@ const actions = {
       segmentationRequestTime: rightNowUTC,
     });
   },
+
+  updateLoadingFlag({ commit }, isLoading) {
+    commit({
+      type: 'SET_IS_LOADING_SEGMENTATION',
+      isLoading: isLoading,
+    });
+  }
 };
 
 const getters = {
@@ -187,6 +201,7 @@ const getters = {
   getScribbleCounter: state => state.scribbles,
   getForegroundScribbleCounter: state  => state.foregroundScribbles,
   getBackgroundScribbleCounter: state  => state.backgroundScribbles,
+  isLoadingSegmentation: state => state.isLoadingSegmentation,
 };
 
 const interactionSessionModule = {

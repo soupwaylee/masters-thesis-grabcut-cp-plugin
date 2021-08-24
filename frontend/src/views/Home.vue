@@ -30,24 +30,51 @@
                 :max="brushSizeRange[1]"
                 :min="brushSizeRange[0]"
         />
-        <span class="p-buttonset">
-          <SelectButton v-model="brushType" :options="brushOptions" dataKey="value" optionLabel="name"
+        <div class="p-d-flex p-jc-center">
+          <div class="p-mx-1 p-my-2">
+            <SelectButton v-model="brushType" :options="brushOptions" dataKey="value" optionLabel="name"
                         optionValue="value"/>
-          <Button icon="pi pi-undo" label="Undo" @click="undo()"/>
-          <Button icon="pi pi-refresh" label="Redo"/>
-          <Button icon="pi pi-trash" label="Clear" @click="clear()"/>
-        </span>
+          </div>
+          <div class="p-mx-1 p-my-2">
+            <Button icon="pi pi-undo" label="Undo" @click="undo()"/>
+          </div>
+          <div class="p-mx-1 p-my-2">
+            <Button icon="pi pi-refresh" label="Redo"/>
+          </div>
+          <div class="p-mx-1 p-my-2">
+            <Button icon="pi pi-trash" label="Clear" @click="clear()"/>
+          </div>
+        </div>
       </div>
-      <InteractionCanvas ref="ic"/>
+      <div class="p-d-flex">
+        <div class="p-d-flex"><InteractionCanvas ref="ic"/></div>
+        <div class="p-d-flex p-flex-column p-mx-auto">
+          <div class="p-field-checkbox"
+            v-for="category of visibilityToggleCategories"
+            :key="category.key">
+            <Checkbox :id="category.key" name="category" :value="category" v-model="selectedVisibilities"/>
+            <label :for="category.key">{{category.name}}</label>
+          </div>
+        </div>
+      </div>
       <div class="progression-wrapper">
         <Button icon="pi pi-cloud-upload" label="Segment" @click="segment()"/>
         <Button icon="pi pi-check" label="Finish"/>
+      </div>
+      <ProgressBar v-if="isLoadingSegmentation" mode="indeterminate" style="height: .5em"/>
+      <div v-if="hasSegmentations">
+        <Dropdown
+          v-model="selectedSegmentation"
+          :options="segmentationContexts"
+          optionLabel="submissionTime"
+          placeholder="Pick a Segmentation" />
       </div>
     </template>
   </Card>
 </template>
 
 <script>
+import {mapGetters} from 'vuex';
 import InteractionCanvas from "@/components/InteractionCanvas";
 
 export default {
@@ -65,7 +92,15 @@ export default {
       brushSizeRange: [1, 30],
     };
   },
+
   computed: {
+    ...mapGetters({
+      isLoadingSegmentation: 'isLoadingSegmentation',
+      hasSegmentations: 'hasSegmentations',
+      segmentationContexts: 'getSegmentationContexts',
+      visibilityToggleCategories: 'getVisibilityToggleCategories',
+    }),
+
     brushType: {
       get() {
         return this.$store.getters.getBrushType;
@@ -77,6 +112,7 @@ export default {
         });
       }
     },
+
     brushSize: {
       get() {
         return this.$store.getters.getBrushSize;
@@ -88,6 +124,30 @@ export default {
         });
       }
     },
+
+    selectedVisibilities: {
+      get() {
+        return this.$store.getters.getSelectedVisibilities;
+      },
+      set(selection) {
+        this.$store.commit({
+          type: 'SET_SELECTED_VISIBILITIES',
+          selection: selection,
+        })
+      },
+    },
+
+    selectedSegmentation: {
+      get() {
+        return this.$store.getters.getDisplayedSegmentation;
+      },
+      set(segmentation) {
+        this.$store.commit({
+          type: 'SET_CURRENTLY_DISPLAYED_SEGMENTATION',
+          segmentation: segmentation
+        });
+      },
+    }
   },
   created() {
     let randId = [...Array(64)].map(() => Math.floor(Math.random()*36).toString(36)).join('');

@@ -23,7 +23,7 @@ class GrabCutSegmenter:
     # TODO allow for further refinement with cv.GC_EVAL or cv.GC_EVAL_FREEZE_MODEL
 
     @staticmethod
-    def pixels_to_gc_classes_array(target_idx, target_type, foreground=1, log_gc_classes=True):
+    def pixels_to_gc_classes_array(target_idx, target_type, foreground=1, log_gc_classes=False):
         if len(target_idx) != len(target_type):
             current_app.logger.warning('Index-value mismatch')
             return

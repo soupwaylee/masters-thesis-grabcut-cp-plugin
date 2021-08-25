@@ -1,6 +1,6 @@
 import cv2 as cv
 import numpy as np
-from functools import reduce, partial
+from datetime import datetime
 from flask import current_app
 import logging
 
@@ -23,7 +23,7 @@ class GrabCutSegmenter:
     # TODO allow for further refinement with cv.GC_EVAL or cv.GC_EVAL_FREEZE_MODEL
 
     @staticmethod
-    def pixels_to_gc_classes_array(target_idx, target_type, foreground=1):
+    def pixels_to_gc_classes_array(target_idx, target_type, foreground=1, log_gc_classes=True):
         if len(target_idx) != len(target_type):
             current_app.logger.warning('Index-value mismatch')
             return
@@ -39,6 +39,11 @@ class GrabCutSegmenter:
             target_gc_classes[target_type] = cv.GC_FGD
 
             np.put(gc_classes_array, target_idx, target_gc_classes)
+
+            if log_gc_classes:
+                now = datetime.now()
+                dt_str = now.strftime('%m-%d-%Y-%H%M%S')
+                np.savez(f'scribbles/{dt_str}.npz', gc_classes_array)
 
             return gc_classes_array.reshape(GrabCutSegmenter.img_shape)
 

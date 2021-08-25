@@ -51,13 +51,18 @@ function getScribbleMaskContext(imageData) {
 
   for (let i = 0; i < imageData.length - 1; i += 4) {
     const [r, g, b,] = imageData.slice(i, i + 4);
-    isWhite &&= (r === 0 && g === 0 && b === 0);
+    isWhite &&= (r === 255 && g === 255 && b === 255);
     if (isWhite) continue;
 
-    let isForeground = colorToPixelType[`rgba(${r}, ${g}, ${b}, 1)`] === 'fg';
-
-    scribbleIndices.push(i / 4);
-    scribbleTypes.push(isForeground);
+    const currentPixelType = colorToPixelType[`rgba(${r}, ${g}, ${b}, 1)`];
+    if (currentPixelType === 'fg') {
+      scribbleIndices.push(i / 4);
+      scribbleTypes.push(true);
+    }
+    else if (currentPixelType === 'bg') {
+      scribbleIndices.push(i / 4);
+      scribbleTypes.push(false);
+    }
   }
 
   return {

@@ -8,6 +8,8 @@ if os.getenv("CP_DEV_PYCHARMDEBUG_TARGET") == "cp-plugin-grabcut-backend":
     import pydevd_pycharm
     pydevd_pycharm.settrace('cp-traefik', port=5679, stdoutToServer=True, stderrToServer=True, suspend=False)
 
+from pathlib import Path
+Path('scribbles').mkdir(parents=True, exist_ok=True)
 
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix

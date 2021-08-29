@@ -6,6 +6,22 @@
   <router-view/>
 </template>
 
+<script>
+export default {
+  watch: {
+    // Keep an eye on changes of the location (URL)
+    $route() { // You could get "to" and "from" information like this: $route(to, from) {
+      // If I'm in a iframe...
+      if(window.parent && (window.parent!=window)) {
+        // notify the parent (cp-component-core, where the dashboard is)
+        // of the location change
+        window.parent.postMessage("locationChangedNotification", "*");
+      }
+    }
+  }
+}
+</script>
+
 <style lang="scss">
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;

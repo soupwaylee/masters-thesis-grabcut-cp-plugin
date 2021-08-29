@@ -12,6 +12,7 @@ features:
     - v2021-08-06-0
     - v2021-08-08-0
     - v2021-08-08-1
+    - v2021-08-29-0
 
   # List features, that are not relevant for this plugin/component
   # (i.e. don't need to be considered for manual patching)

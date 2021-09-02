@@ -135,7 +135,7 @@ const actions = {
     const scribbleMutationTypes = ['SET_SCRIBBLES', 'SET_FOREGROUND_SCRIBBLES', 'SET_BACKGROUND_SCRIBBLES'];
 
     for (let type of scribbleMutationTypes) {
-      commit(type, 0);
+      commit({type: type, scribbles: 0});
     }
   },
 

@@ -1,8 +1,9 @@
 import cv2 as cv
 import numpy as np
 from datetime import datetime
-from flask import current_app
 import logging
+import app
+
 
 log = logging.getLogger('app.sub')
 
@@ -25,10 +26,10 @@ class GrabCutSegmenter:
     @staticmethod
     def pixels_to_gc_classes_array(target_idx, target_type, foreground=1, log_gc_classes=False):
         if len(target_idx) != len(target_type):
-            current_app.logger.warning('Index-value mismatch')
+            app.logger.warning('Index-value mismatch')
             return
         elif len(target_idx) == 0:
-            current_app.logger.warning('Empty lists')
+            app.logger.warning('Empty lists')
             return
         else:
             gc_classes_array = np.empty(GrabCutSegmenter.img_shape, dtype=np.uint8).ravel()
@@ -52,7 +53,7 @@ class GrabCutSegmenter:
         target_img_3c = cv.cvtColor(target_img, cv.COLOR_GRAY2RGB)
         manual_mask = GrabCutSegmenter.pixels_to_gc_classes_array(target_idx, target_type)
         if manual_mask is None:
-            current_app.logger.info('Scribble mask is missing.')
+            app.logger.info('Scribble mask is missing.')
             return
         try:
             bgd_model = np.zeros((1, 65), np.float64)
@@ -70,5 +71,5 @@ class GrabCutSegmenter:
             mask_boolean = np.where((grabcut_result == 2) | (grabcut_result == 0), False, True).astype('bool')
             return np.ravel(mask_boolean).tolist()
         except Exception as exc:
-            current_app.logger.err('Error during GrabCut segmentation', exc_info=True)
+            app.logger.error('Error during GrabCut segmentation', exc_info=True)
             raise RuntimeError('Failed to perform GrabCut') from exc

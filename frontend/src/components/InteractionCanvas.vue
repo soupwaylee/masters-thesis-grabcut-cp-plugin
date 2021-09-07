@@ -94,11 +94,14 @@ export default {
       'incrementScribbleCount',
       'decrementScribbleCount',
       'resetScribbleCount',
-      'timeImageInteractionStarting',
-      'setIsFirstInteractionFlag',
-      'incrementSubmissionCounter',
+
+      'punchInImageInteractionStartingTime',
       'punchInSegmentationTime',
-      'updateLoadingFlag',
+      'incrementSubmissionCounter',
+
+      'setIsFirstInteractionFlag',
+      'setIsCanvasEmptyFlag',
+
       'setSegmentationForDisplay',
     ]),
 
@@ -131,7 +134,7 @@ export default {
 
     startMousePath(e) {
       if (this.isFirstInteraction) {
-        this.timeImageInteractionStarting();
+        this.punchInImageInteractionStartingTime();
         this.setIsFirstInteractionFlag(false);
       }
 
@@ -258,16 +261,27 @@ export default {
     async segment() {
       this.incrementSubmissionCounter();
       this.punchInSegmentationTime();
-      this.updateLoadingFlag(true);
 
-      await this.$store.dispatch('getSegmentation', {
+      return this.$store.dispatch('getSegmentation', {
         imageData: this.canvasCtx.getImageData(0, 0, this.width, this.height).data,
         colors: this.maskColorSpace,
-      });
+      }).then(
+        () => {
+          this.$store.dispatch('setSegmentationForDisplay', this.latestSegmentation);
+        }
+      );
+    },
 
-      this.$store.dispatch('setSegmentationForDisplay', this.latestSegmentation);
-
-      this.updateLoadingFlag(false);
+    async submitDisplayedMask() {
+      return this.$store.dispatch('submitDisplayedMask')
+        .then(
+          () => {
+            this.$store.dispatch('resetInteractionState');
+            this.$store.dispatch('resetCanvasState');
+            this.$store.dispatch('clearSegmentations');
+            this.clearDrawings();
+          }
+        );
     }
   }
 }

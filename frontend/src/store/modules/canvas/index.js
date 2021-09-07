@@ -1,6 +1,7 @@
 const state = {
   brushType: 'fg',
   brushSize: 1,
+  isCanvasEmpty: true,
   currentlyDisplayedSegmentation: null,
   visibilityToggleCategories: [
     {name: 'Canvas', key: 'C'},
@@ -19,6 +20,9 @@ const mutations = {
   SET_BRUSHSIZE (state, payload) {
     state.brushSize = payload.brushSize;
   },
+  SET_IS_CANVAS_EMPTY (state, payload) {
+    state.isCanvasEmpty = payload.isEmpty;
+  },
   SET_CURRENTLY_DISPLAYED_SEGMENTATION (state, payload) {
     state.currentlyDisplayedSegmentation = payload.segmentation;
   },
@@ -34,6 +38,9 @@ const actions = {
   setBrushSize ({ commit }, payload) {
     commit('SET_BRUSHSIZE', payload);
   },
+  setIsCanvasEmptyFlag({ commit }, payload) {
+    commit('SET_IS_CANVAS_EMPTY', payload);
+  },
   setSegmentationForDisplay ({ commit }, segmentation) {
     commit({
       type: 'SET_CURRENTLY_DISPLAYED_SEGMENTATION',
@@ -45,12 +52,27 @@ const actions = {
       type: 'SET_SELECTED_VISIBILITIES',
       selection: selection,
     });
+  },
+  resetCanvasState({ commit }) {
+    commit({
+      type: 'SET_BRUSHTYPE',
+      brushType: 'fg'
+    });
+    commit({
+      type: 'SET_BRUSHSIZE',
+      brushSize: 1
+    });
+    commit({
+      type: 'SET_CURRENTLY_DISPLAYED_SEGMENTATION',
+      segmentation: null
+    });
   }
 };
 
 const getters = {
   getBrushType: state => state.brushType,
   getBrushSize: state => state.brushSize,
+  getIsCanvasEmpty: state => state.brushSize,
   getDisplayedSegmentation: state => state.currentlyDisplayedSegmentation,
   getVisibilityToggleCategories: state => state.visibilityToggleCategories,
   getSelectedVisibilities: state => state.selectedVisibilities,

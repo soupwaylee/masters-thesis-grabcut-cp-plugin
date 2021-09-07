@@ -14,39 +14,33 @@ Path('scribbles').mkdir(parents=True, exist_ok=True)
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from apis import api
+app = Flask(__name__)
+# fileConfig('logging.conf')
+
+env_config = os.getenv("APP_SETTINGS", "config.DevelopmentConfig")
+app.config.from_object(env_config)
+
+app.wsgi_app = ProxyFix(app.wsgi_app)
+
+import logging
+logger = logging.getLogger('gunicorn.error')
+
 from db import db
+from apis import api
 from migrate import migrate
 
+# Register DB
+db.init_app(app)
+logger.info('Registered db')
 
-def create_app(config=None):
-    app = Flask(__name__)
-    # fileConfig('logging.conf')
+# Register API
+api.init_app(app)
+logger.info('Registered apis')
 
-    if config == "testing":
-        env_config = "config.TestingConfig"
-    else:
-        env_config = os.getenv("APP_SETTINGS", "config.DevelopmentConfig")
-    app.config.from_object(env_config)
+# Register Flask-Migrate to handle database migrations
+migrate.init_app(app, db)
+logger.info('Registered flask migrate')
 
-    app.wsgi_app = ProxyFix(app.wsgi_app)
-
-    # Register API
-    api.init_app(app)
-    app.logger.info('Registered apis')
-
-    # Register DB
-    db.init_app(app)
-    app.logger.info('Registered db')
-
-    # Register Flask-Migrate to handle database migrations
-    migrate.init_app(app, db)
-    app.logger.info('Registered flask migrate')
-
-    return app
-
-
-app = create_app()
 
 if __name__ == '__main__':
     # THIS IS NOT BEING EXECUTED

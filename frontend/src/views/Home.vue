@@ -1,4 +1,5 @@
 <template>
+  <ParticipantDataDialogue></ParticipantDataDialogue>
   <Card class="noTotalWidth p-shadow-5">
     <template #title>
       <div class="title-wrapper">
@@ -24,31 +25,40 @@
     </template>
     <template #content>
       <div class="tool-wrapper">
-        <label for="sizeSlider">Size: {{ brushSize }}</label>
-        <Slider id="sizeSlider"
-                v-model="brushSize"
-                :max="brushSizeRange[1]"
-                :min="brushSizeRange[0]"
-        />
+        <div class="p-d-flex p-flex-column p-jc-center">
+          <label class="p-my-1">Brush Size: {{ brushSize }}</label>
+          <Slider class="p-my-1" id="sizeSlider"
+                  v-model="brushSize"
+                  :max="brushSizeRange[1]"
+                  :min="brushSizeRange[0]"
+          />
+        </div>
         <div class="p-d-flex p-jc-center">
-          <div class="p-mx-1 p-my-2">
-            <SelectButton v-model="brushType" :options="brushOptions" dataKey="value" optionLabel="name"
-                        optionValue="value"/>
+          <div class="p-mx-2 p-my-2">
+            <SelectButton v-model="brushType"
+                          :options="brushOptions"
+                          dataKey="value"
+                          optionLabel="name"
+                          optionValue="value"/>
           </div>
-          <div class="p-mx-1 p-my-2">
-            <Button icon="pi pi-undo" label="Undo" @click="undo()"/>
+          <div class="p-mx-2 p-my-2">
+            <Button icon="pi pi-undo" label="Undo"
+                    @click="undo()"
+                    :disabled="isLoadingOrSubmitting || hasNoScribbles"/>
           </div>
-          <div class="p-mx-1 p-my-2">
-            <Button icon="pi pi-refresh" label="Redo"/>
+          <div class="p-mx-2 p-my-2">
+            <Button icon="pi pi-refresh" label="Redo" :disabled="true"/>
           </div>
-          <div class="p-mx-1 p-my-2">
-            <Button icon="pi pi-trash" label="Clear" @click="clear()"/>
+          <div class="p-mx-2 p-my-2">
+            <Button icon="pi pi-trash" label="Clear"
+                    @click="clear()"
+                    :disabled="isLoadingOrSubmitting || hasNoScribbles"/>
           </div>
         </div>
       </div>
-      <div class="p-d-flex">
-        <div class="p-d-flex"><InteractionCanvas ref="ic"/></div>
-        <div class="p-d-flex p-flex-column p-mx-auto">
+      <div class="p-d-flex p-jc-center">
+        <div class="p-d-flex p-mx-1 p-my-2"><InteractionCanvas ref="ic"/></div>
+        <div class="p-d-flex p-flex-column p-jc-start p-ml-4 p-my-2">
           <div class="p-field-checkbox"
             v-for="category of visibilityToggleCategories"
             :key="category.key">
@@ -58,11 +68,23 @@
         </div>
       </div>
       <div class="progression-wrapper">
-        <Button icon="pi pi-cloud-upload" label="Segment" @click="segment()"/>
-        <Button icon="pi pi-check" label="Finish"/>
+        <ConfirmPopup></ConfirmPopup>
+        <div class="p-d-flex p-jc-center">
+          <div class="p-mx-2 p-my-2">
+            <Button icon="pi pi-cloud-upload" label="Segment"
+                    @click="segment()"
+                    :loading="isLoadingSegmentation"
+                    :disabled="hasNoScribbles || isSubmittingSegmentation"/>
+          </div>
+          <div class="p-mx-2 p-my-2">
+            <Button icon="pi pi-check" label="Finish"
+                    @click="finish($event)"
+                    :loading="isSubmittingSegmentation"
+                    :disabled="(selectedSegmentation === null) || isLoadingSegmentation"/>
+          </div>
+        </div>
       </div>
-      <ProgressBar v-if="isLoadingSegmentation" mode="indeterminate" style="height: .5em"/>
-      <div v-if="hasSegmentations">
+      <div v-if="hasSegmentations" class="p-mx-1 p-my-2">
         <Dropdown
           v-model="selectedSegmentation"
           :options="segmentationContexts"
@@ -74,12 +96,15 @@
 </template>
 
 <script>
-import {mapGetters} from 'vuex';
+import {mapGetters, mapActions} from 'vuex';
 import InteractionCanvas from "@/components/InteractionCanvas";
+import ParticipantDataDialogue from "@/components/ParticipantDataDialogue";
+import {submissionWarnings, scribbleSubmissionSuccess, segmentationSubmission} from "@/helpers/toastMessages";
 
 export default {
   name: "App",
   components: {
+    ParticipantDataDialogue,
     InteractionCanvas
   },
   data() {
@@ -96,10 +121,27 @@ export default {
   computed: {
     ...mapGetters({
       isLoadingSegmentation: 'isLoadingSegmentation',
+      isSubmittingSegmentation: 'isSubmittingSegmentation',
+      hasNoScribbles: 'hasNoScribbles',
       hasSegmentations: 'hasSegmentations',
       segmentationContexts: 'getSegmentationContexts',
       visibilityToggleCategories: 'getVisibilityToggleCategories',
+      scribbleCounter: 'getScribbleCounter',
+      foregroundScribbleCounter: 'getForegroundScribbleCounter',
+      backgroundScribbleCounter: 'getBackgroundScribbleCounter',
     }),
+
+    isLoadingOrSubmitting() {
+      return this.isLoadingSegmentation || this.isSubmittingSegmentation;
+    },
+
+    hasNoForegroundScribbles() {
+      return this.foregroundScribbleCounter === 0;
+    },
+
+    hasNoBackgroundScribbles() {
+      return this.backgroundScribbleCounter === 0;
+    },
 
     brushType: {
       get() {
@@ -154,25 +196,81 @@ export default {
     this.$store.dispatch('setSessionId', randId);
   },
   methods: {
+    ...mapActions([
+      'setIsLoadingFlag',
+      'setIsSubmittingFlag',
+    ]),
+
     openGrabCutInfo() {
       this.displayInfo = true;
     },
+
     undo() {
       this.$refs.ic.undoLastStroke();
     },
+
     clear() {
       this.$refs.ic.clearDrawings();
     },
-    segment() {
-      this.$refs.ic.segment();
-    }
+
+    async segment() {
+      if (this.hasNoForegroundScribbles) {
+        this.$toast.add(submissionWarnings.noForegroundScribbles);
+        return;
+      }
+      if (this.hasNoBackgroundScribbles) {
+        this.$toast.add(submissionWarnings.noBackgroundScribbles);
+        return;
+      }
+      this.setIsLoadingFlag(true);
+      await this.$refs.ic.segment()
+        .then(
+          () => {
+            this.$toast.add(scribbleSubmissionSuccess(this.scribbleCounter));
+          }
+        );
+      this.setIsLoadingFlag(false);
+    },
+
+    finish(event) {
+      this.$confirm.require({
+        target: event.currentTarget,
+        message: 'Are you sure you want to submit the displayed segmentation mask and move on to the next image?',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.submit();
+        },
+        reject: () => {},
+      });
+      //TODO increment image ID
+    },
+
+    async submit() {
+      this.setIsSubmittingFlag(true);
+      await this.$refs.ic.submitDisplayedMask()
+        .then(
+          () => {
+            this.$toast.add(segmentationSubmission.success);
+          },
+          error => {
+            console.error(error);
+          }
+        );
+      this.setIsSubmittingFlag(false);
+    },
   },
 };
 </script>
 
 <style lang="scss">
-.noTotalWidth {
-  width: 80%;
-  margin: auto;
-}
+  .noTotalWidth {
+    width: 80%;
+    margin: auto;
+  }
+
+  .p-slider-horizontal {
+    width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+  }
 </style>

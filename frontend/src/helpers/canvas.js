@@ -112,6 +112,14 @@ function booleanMaskArrayToIntImageDataArray(mask, fg=255, bg=0) {
   });
 }
 
+function booleanMaskArrayToReducedMaskNumberArray(mask) {
+  let reducedArray = [];
+  mask.forEach((isFg, idx) => {
+    if(isFg) reducedArray.push(idx);
+  });
+  return reducedArray;
+}
+
 export {
   colorToPixelType,
   pixelTypeToColor,
@@ -120,4 +128,5 @@ export {
   getScribbleMaskContext,
   getScribblePixelCount,
   booleanMaskArrayToIntImageDataArray,
+  booleanMaskArrayToReducedMaskNumberArray,
 };

@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
 
-class GrabCutInteractionModel(db.Model):
+class GrabCutInteraction(db.Model):
     """
     A GrabCutInteraction defines a user interaction via the GrabCut tool
     to annotate a DHM phase image.
@@ -54,3 +54,55 @@ class GrabCutInteractionModel(db.Model):
     #TODO
     # @staticmethod
     # def from_dict(dictionary=dict()):
+
+
+# TODO check this
+class GrabCutInteractionDAO(object):
+    def __init__(self, session):
+        self.session = session
+
+    def grabcutinteractions(self):
+        return self.session.query(GrabCutInteraction).all()
+
+    def get(self, id):
+        if gci := self.session.query(GrabCutInteraction).get(id):
+            return gci
+
+    def create(self, data):
+        # TODO perform db connection & segmentation asynchronously?
+        gci = GrabCutInteraction(
+            session_id=data['sessionId'],
+            image_id=data['imageId'],
+            annotated_pixels=data['annotatedPixels'],
+            foreground_pixels=data['foregroundPixels'],
+            background_pixels=data['backgroundPixels'],
+            scribbles=data['scribbles'],
+            foreground_scribbles=data['foregroundScribbles'],
+            background_scribbles=data['backgroundScribbles'],
+            submission_counter=data['submissionIndex'],
+            first_interaction_time=data['firstInteractionTime'],
+            submission_time=data['submissionTime']
+        )
+        self.session.add(gci)
+        self.session.commit()
+        return gci
+
+    def update(self, id, data):
+        gci = self.session.query(GrabCutInteraction).get(id)
+        gci.session_id = data['sessionId']
+        gci.image_id = data['imageId']
+        gci.annotated_pixels = data['annotatedPixels']
+        gci.foreground_pixels = data['foregroundPixels']
+        gci.background_pixels = data['backgroundPixels']
+        gci.scribbles = data['scribbles'],
+        gci.foreground_scribbles = data['foregroundScribbles'],
+        gci.background_scribbles = data['backgroundScribbles'],
+        gci.submission_counter = data['submissionIndex'],
+        gci.first_interaction_time = data['firstInteractionTime'],
+        gci.submission_time = data['submissionTime']
+        self.session.commit()
+        return gci
+
+    def delete(self, id):
+        self.session.delete(GrabCutInteraction.query.get(id))
+        self.session.commit()

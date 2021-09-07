@@ -16,6 +16,7 @@ const state = {
   segmentationRequestTime: null,
 
   isLoadingSegmentation: false,
+  isSubmittingSegmentation: false,
 };
 
 const mutations = {
@@ -69,6 +70,10 @@ const mutations = {
 
   SET_IS_LOADING_SEGMENTATION(state, payload) {
     state.isLoadingSegmentation = payload.isLoading;
+  },
+
+  SET_IS_SUBMITTING_SEGMENTATION(state, payload) {
+    state.isSubmittingSegmentation = payload.isSubmitting;
   }
 };
 
@@ -87,7 +92,7 @@ const actions = {
     });
   },
 
-  timeImageInteractionStarting({ commit }) {
+  punchInImageInteractionStartingTime({ commit }) {
     let now = new Date();
     let rightNowUTC = now.toUTCString();
     commit({
@@ -187,21 +192,68 @@ const actions = {
     });
   },
 
-  updateLoadingFlag({ commit }, isLoading) {
+  setIsLoadingFlag({ commit }, isLoading) {
     commit({
       type: 'SET_IS_LOADING_SEGMENTATION',
       isLoading: isLoading,
     });
-  }
+  },
+
+  setIsSubmittingFlag({ commit }, isSubmitting) {
+    commit({
+      type: 'SET_IS_SUBMITTING_SEGMENTATION',
+      isSubmitting: isSubmitting,
+    });
+  },
+
+  resetInteractionState({ commit }) {
+    commit({
+      type: 'SET_CURRENT_IMAGE_FIRST_INTERACTION',
+      currentImageFirstInteraction: true,
+    });
+
+    commit({
+      type: 'SET_CURRENT_IMAGE_STARTED_AT',
+      interactionStartingTime: null,
+    });
+
+    commit({
+      type: 'SET_SCRIBBLES',
+      scribbles: 0,
+    });
+
+    commit({
+      type: 'SET_FOREGROUND_SCRIBBLES',
+      scribbles: 0,
+    });
+
+    commit({
+      type: 'SET_BACKGROUND_SCRIBBLES',
+      scribbles: 0,
+    });
+
+    commit({
+      type: 'SET_SUBMISSION_COUNTER',
+      value: 0,
+    });
+
+    commit({
+      type: 'SET_SEGMENTATION_REQUEST_TIME',
+      segmentationRequestTime: null,
+    });
+  },
 };
 
 const getters = {
+  getSessionId: state => state.sessionId,
   getCurrentImageIndex: state => state.currentImageIndex,
   getCurrentImageFirstInteraction: state => state.currentImageFirstInteraction,
   getScribbleCounter: state => state.scribbles,
   getForegroundScribbleCounter: state  => state.foregroundScribbles,
   getBackgroundScribbleCounter: state  => state.backgroundScribbles,
+  hasNoScribbles: state => state.scribbles === 0,
   isLoadingSegmentation: state => state.isLoadingSegmentation,
+  isSubmittingSegmentation: state => state.isSubmittingSegmentation,
 };
 
 const interactionSessionModule = {

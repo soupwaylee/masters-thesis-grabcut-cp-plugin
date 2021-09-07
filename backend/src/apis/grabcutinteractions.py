@@ -1,16 +1,17 @@
+from flask import request
 from flask_restx import Namespace, Resource, fields, marshal
-from flask import abort, current_app, request
-from models.grabcutinteraction import GrabCutInteractionModel
-from db import db
 from sqlalchemy import exc
-from utils.grabcut_segmentation import GrabCutSegmenter
-from utils.dhm_phase_images import ImageHandler
 
+import app
+from db import db
+from models.grabcutinteraction import GrabCutInteractionDAO
+from utils.dhm_phase_images import ImageHandler
+from utils.grabcut_segmentation import GrabCutSegmenter
 
 api = Namespace('grabcutinteractions', description='GrabCutInteraction operations')
 
 interaction_record_fields = api.model('GrabCutInteraction', {
-    'id': fields.String(description='UUID for the GrabCut interaction record', attribute=''),
+    'id': fields.String(description='UUID for the GrabCut interaction record', attribute='id'),
     'sessionId': fields.String(required=True, description='ID for the labeling session', attribute='session_id'),
     'imageId': fields.Integer(required=True,
                               description='ID for the image that had been labelled for the current record',
@@ -49,61 +50,6 @@ segmentation_post_response_fields = api.model('SegmentationResponse', {
 })
 
 
-# TODO check this
-class GrabCutInteractionDAO(object):
-    def __init__(self, session):
-        self.session = session
-
-    def grabcutinteractions(self):
-        return self.session.query(GrabCutInteractionModel).all()
-
-    def get(self, id):
-        if gci := self.session.query(GrabCutInteractionModel).get(id):
-            return gci
-        else:
-            api.abort(404, f'GrabCut Interaction record {id} does not exist')
-
-    def create(self, data):
-        current_app.logger.info(f"Creating GrabCutInteraction record: {str(data)}")
-        # TODO perform db connection & segmentation asynchronously?
-        gci = GrabCutInteractionModel(
-            session_id=data['sessionId'],
-            image_id=data['imageId'],
-            annotated_pixels=data['annotatedPixels'],
-            foreground_pixels=data['foregroundPixels'],
-            background_pixels=data['backgroundPixels'],
-            scribbles=data['scribbles'],
-            foreground_scribbles=data['foregroundScribbles'],
-            background_scribbles=data['backgroundScribbles'],
-            submission_counter=data['submissionIndex'],
-            first_interaction_time=data['firstInteractionTime'],
-            submission_time=data['submissionTime']
-        )
-        self.session.add(gci)
-        self.session.commit()
-        return gci
-
-    def update(self, id, data):
-        gci = self.session.query(GrabCutInteractionModel).get(id)
-        gci.session_id = data['sessionId']
-        gci.image_id = data['imageId']
-        gci.annotated_pixels = data['annotatedPixels']
-        gci.foreground_pixels = data['foregroundPixels']
-        gci.background_pixels = data['backgroundPixels']
-        gci.scribbles = data['scribbles'],
-        gci.foreground_scribbles = data['foregroundScribbles'],
-        gci.background_scribbles = data['backgroundScribbles'],
-        gci.submission_counter = data['submissionIndex'],
-        gci.first_interaction_time = data['firstInteractionTime'],
-        gci.submission_time = data['submissionTime']
-        self.session.commit()
-        return gci
-
-    def delete(self, id):
-        self.session.delete(GrabCutInteractionModel.query.get(id))
-        self.session.commit()
-
-
 DAO = GrabCutInteractionDAO(db.session)
 
 
@@ -115,7 +61,10 @@ class GrabCutInteractionList(Resource):
     @api.marshal_list_with(interaction_record_fields)
     def get(self):
         """List all interaction records"""
-        return DAO.grabcutinteractions()
+        try:
+            return DAO.grabcutinteractions()
+        except RuntimeError as err:
+            return f'RuntimeError: {err}', 404
 
     @api.doc('Submit user interaction record and perform segmentation for given image and annotation pixels.')
     @api.expect(segmentation_fields)
@@ -136,12 +85,13 @@ class GrabCutInteractionList(Resource):
                 annotated_pixel_indices,
                 annotated_pixel_types)
         except RuntimeError as err:
-            return f'RuntimeError: {err}', 404
+            return f'RuntimeError: {err}', 500
 
         try:
             gci = DAO.create(interaction_record)
+            app.logger.info(f"[*] Created InteractionRecord {interaction_record}")
         except exc.SQLAlchemyError as err:
-            return f'DB error: {err}', 404
+            return f'DB error: {err}', 500
 
         return marshal(
             {
@@ -162,7 +112,8 @@ class GrabCutInteraction(Resource):
     @api.marshal_with(interaction_record_fields)
     def get(self, id):
         """Fetch a given resource"""
-        return DAO.get(id)
+        if result := DAO.get(id):
+            return result, 200
 
     @api.doc('delete_grabcutinteraction')
     @api.response(204, 'GrabCut interaction record deleted')

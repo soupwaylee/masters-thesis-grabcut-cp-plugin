@@ -7,8 +7,21 @@ export class APIService {
   constructor() {
     this.instance = axios.create({
       baseURL: APIBaseURL,
-      timeout: 1000 * 5,
+      timeout: 1000 * 9,
     });
+  }
+
+  submitParticipantData(sessionId, ageGroup, academicField) {
+    return this.instance.post(
+      '/demographics/',
+      {
+        'sessionId': sessionId,
+        'ageGroup': ageGroup,
+        'academicField': academicField,
+      }
+    ).then(
+      response => response.data
+    );
   }
 
   getDHMImage(imageID) {
@@ -24,6 +37,20 @@ export class APIService {
         'interactionRecord': interactionRecord,
         'annotatedPixelIndices': scribbleIndices,
         'annotatedPixelTypes': scribbleTypes,
+      }
+    ).then(
+      response => response.data
+    );
+  }
+
+  submitSegmentation(sessionId, imageId, interactionRecordId, segmentationMask) {
+    return this.instance.post(
+      '/masks/',
+      {
+        'sessionId': sessionId,
+        'imageId': imageId,
+        'interactionRecordId': interactionRecordId,
+        'mask': segmentationMask,
       }
     ).then(
       response => response.data

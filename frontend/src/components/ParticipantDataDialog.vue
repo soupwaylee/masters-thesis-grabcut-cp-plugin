@@ -1,25 +1,3 @@
-<!--
-1. Choose your age group
-  Under 18
-  18-24
-  25-34
-  35-44
-  45-54
-  55-64
-  Above 64
-2. Which academic field do you currently identify with most?
-  Medicine
-  Electrical and Computer Engineering
-  Computer Science
-  Management
-  Biology
-  (Bio-)chemistry
-  Mechanical Engineering
-  Social Sciences
-  Psychology
-  Civil Engineering / Architecture
--->
-
 <template>
   <Toast position="bottom-right" group="br"/>
   <Dialog v-model:visible="displayForm" :style="{width: '50vw'}"

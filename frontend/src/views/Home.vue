@@ -1,5 +1,5 @@
 <template>
-  <ParticipantDataDialogue></ParticipantDataDialogue>
+  <ParticipantDataDialog></ParticipantDataDialog>
   <Card class="noTotalWidth p-shadow-5">
     <template #title>
       <div class="title-wrapper">
@@ -98,13 +98,13 @@
 <script>
 import {mapGetters, mapActions} from 'vuex';
 import InteractionCanvas from "@/components/InteractionCanvas";
-import ParticipantDataDialogue from "@/components/ParticipantDataDialogue";
+import ParticipantDataDialog from "@/components/ParticipantDataDialog";
 import {submissionWarnings, scribbleSubmissionSuccess, segmentationSubmission} from "@/helpers/toastMessages";
 
 export default {
   name: "App",
   components: {
-    ParticipantDataDialogue,
+    ParticipantDataDialog,
     InteractionCanvas
   },
   data() {

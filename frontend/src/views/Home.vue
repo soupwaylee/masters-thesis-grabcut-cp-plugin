@@ -100,6 +100,7 @@ import {mapGetters, mapActions} from 'vuex';
 import InteractionCanvas from "@/components/InteractionCanvas";
 import ParticipantDataDialog from "@/components/ParticipantDataDialog";
 import {submissionWarnings, scribbleSubmissionSuccess, segmentationSubmission} from "@/helpers/toastMessages";
+import {getTestImageSet} from "@/helpers/testImages";
 
 export default {
   name: "App",
@@ -194,6 +195,9 @@ export default {
   created() {
     let randId = [...Array(64)].map(() => Math.floor(Math.random()*36).toString(36)).join('');
     this.$store.dispatch('setSessionId', randId);
+
+    let testImages = getTestImageSet();
+    this.$store.dispatch('setTestImages', testImages);
   },
   methods: {
     ...mapActions([

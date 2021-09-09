@@ -1,5 +1,5 @@
 const state = {
-  testImages: [1, 2],
+  testImages: null,
 
   sessionId: "",
   currentImageIndex: 0,
@@ -22,6 +22,10 @@ const state = {
 const mutations = {
   SET_SESSION_ID(state, payload) {
     state.sessionId = payload.sessionId;
+  },
+
+  SET_TEST_IMAGES(state, payload) {
+    state.testImages = payload.testImages;
   },
 
   SET_CURRENT_IMAGE_FIRST_INTERACTION(state, payload) {
@@ -82,6 +86,13 @@ const actions = {
     commit({
       type: 'SET_SESSION_ID',
       sessionId: id,
+    });
+  },
+
+  setTestImages({ commit }, imageArray) {
+    commit({
+      type: 'SET_TEST_IMAGES',
+      testImages: imageArray,
     });
   },
 

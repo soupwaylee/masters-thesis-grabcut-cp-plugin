@@ -13,7 +13,7 @@ api = Namespace('grabcutinteractions', description='GrabCutInteraction operation
 interaction_record_fields = api.model('GrabCutInteraction', {
     'id': fields.String(description='UUID for the GrabCut interaction record', attribute='id'),
     'sessionId': fields.String(required=True, description='ID for the labeling session', attribute='session_id'),
-    'imageId': fields.Integer(required=True,
+    'imageId': fields.String(required=True,
                               description='ID for the image that had been labelled for the current record',
                               attribute='image_id'),
     'annotatedPixels': fields.Integer(description='number of pixels that had been annotated by the user',
@@ -76,8 +76,8 @@ class GrabCutInteractionList(Resource):
         annotated_pixel_indices = data['annotatedPixelIndices']
         annotated_pixel_types = data['annotatedPixelTypes']
 
-        target_image_index = interaction_record['imageId']
-        target_image = ImageHandler.get_image(target_image_index)
+        target_image_id = interaction_record['imageId']
+        target_image = ImageHandler.get_image(target_image_id)
 
         try:
             gc_mask = GrabCutSegmenter.gc_segment(
@@ -85,12 +85,14 @@ class GrabCutInteractionList(Resource):
                 annotated_pixel_indices,
                 annotated_pixel_types)
         except RuntimeError as err:
+            app.logger.error(err)
             return f'RuntimeError: {err}', 500
 
         try:
             gci = DAO.create(interaction_record)
             app.logger.info(f"[*] Created InteractionRecord {interaction_record}")
         except exc.SQLAlchemyError as err:
+            app.logger.error(err)
             return f'DB error: {err}', 500
 
         return marshal(

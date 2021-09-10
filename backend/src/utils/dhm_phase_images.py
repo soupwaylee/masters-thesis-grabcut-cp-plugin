@@ -2,12 +2,7 @@ import numpy as np
 
 
 class ImageHandler:
-    img_data = np.load('./testimages.npz')
-    # needed to create explicit scope for img_data here
-    # in order to bypass absence of class body in scope
-    images = (lambda img_data=img_data:
-              {f'{i}': img_data[f'img{i}']
-               for i in range(1, len(img_data) + 1)})()
+    images = np.load('./studyimages.npz')
 
     @staticmethod
     def get_image(img_id):

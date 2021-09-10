@@ -58,9 +58,7 @@ const actions = {
       "firstInteractionTime": interactionSessionState.currentImageInteractionStartingTime,
       "submissionTime": interactionSessionState.segmentationRequestTime,
     }
-
-    console.table(interactionRecord);
-
+    
     await grabcutService
       .segmentImage(interactionRecord, {scribbleIndices, scribbleTypes})
       .then(response => {

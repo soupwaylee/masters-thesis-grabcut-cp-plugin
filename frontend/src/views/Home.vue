@@ -58,13 +58,9 @@
       </div>
       <div class="p-d-flex p-jc-center">
         <div class="p-d-flex p-mx-1 p-my-2"><InteractionCanvas ref="ic"/></div>
-        <div class="p-d-flex p-flex-column p-jc-start p-ml-4 p-my-2">
-          <div class="p-field-checkbox"
-            v-for="category of visibilityToggleCategories"
-            :key="category.key">
-            <Checkbox :id="category.key" name="category" :value="category" v-model="selectedVisibilities"/>
-            <label :for="category.key">{{category.name}}</label>
-          </div>
+        <div class="p-d-flex p-flex-column p-jc-start p-ml-2 p-my-2">
+          <ToggleButton class="p-mx-1 p-my-2" v-model="isCanvasVisible" onLabel="Drawings" offLabel="Drawings" onIcon="pi pi-eye" offIcon="pi pi-eye-slash" />
+          <ToggleButton class="p-mx-1 p-my-2" v-model="isMaskVisible" onLabel="Segmentation" offLabel="Segmentation" onIcon="pi pi-eye" offIcon="pi pi-eye-slash" />
         </div>
       </div>
       <div class="progression-wrapper">
@@ -74,13 +70,13 @@
             <Button icon="pi pi-cloud-upload" label="Segment"
                     @click="segment()"
                     :loading="isLoadingSegmentation"
-                    :disabled="hasNoScribbles || isSubmittingSegmentation"/>
+                    :disabled="hasNoScribbles || isSubmittingSegmentation || isImageLoading"/>
           </div>
           <div class="p-mx-2 p-my-2">
             <Button icon="pi pi-check" label="Finish"
                     @click="finish($event)"
                     :loading="isSubmittingSegmentation"
-                    :disabled="(selectedSegmentation === null) || isLoadingSegmentation"/>
+                    :disabled="(selectedSegmentation === null) || isLoadingSegmentation || isImageLoading"/>
           </div>
         </div>
       </div>
@@ -121,19 +117,25 @@ export default {
 
   computed: {
     ...mapGetters({
+      currentImageIndex: 'getCurrentImageIndex',
+      numberOfTestImages: 'getNumberOfTestImages',
+      isImageLoading: 'getIsImageLoading',
       isLoadingSegmentation: 'isLoadingSegmentation',
       isSubmittingSegmentation: 'isSubmittingSegmentation',
       hasNoScribbles: 'hasNoScribbles',
       hasSegmentations: 'hasSegmentations',
       segmentationContexts: 'getSegmentationContexts',
-      visibilityToggleCategories: 'getVisibilityToggleCategories',
       scribbleCounter: 'getScribbleCounter',
       foregroundScribbleCounter: 'getForegroundScribbleCounter',
       backgroundScribbleCounter: 'getBackgroundScribbleCounter',
     }),
 
+    isSessionFinished() {
+      return this.currentImageIndex > (this.numberOfTestImages - 1);
+    },
+
     isLoadingOrSubmitting() {
-      return this.isLoadingSegmentation || this.isSubmittingSegmentation;
+      return this.isImageLoading || this.isLoadingSegmentation || this.isSubmittingSegmentation;
     },
 
     hasNoForegroundScribbles() {
@@ -168,16 +170,28 @@ export default {
       }
     },
 
-    selectedVisibilities: {
+    isCanvasVisible: {
       get() {
-        return this.$store.getters.getSelectedVisibilities;
+        return this.$store.getters.getIsCanvasVisible;
       },
-      set(selection) {
+      set(isVisible) {
         this.$store.commit({
-          type: 'SET_SELECTED_VISIBILITIES',
-          selection: selection,
-        })
+          type: 'SET_IS_CANVAS_VISIBLE',
+          isCanvasVisible: isVisible,
+        });
+      }
+    },
+
+    isMaskVisible: {
+      get() {
+        return this.$store.getters.getIsMaskVisible;
       },
+      set(isVisible) {
+        this.$store.commit({
+          type: 'SET_IS_MASK_VISIBLE',
+          isMaskVisible: isVisible,
+        });
+      }
     },
 
     selectedSegmentation: {
@@ -192,6 +206,7 @@ export default {
       },
     }
   },
+
   created() {
     let randId = [...Array(64)].map(() => Math.floor(Math.random()*36).toString(36)).join('');
     this.$store.dispatch('setSessionId', randId);
@@ -199,11 +214,33 @@ export default {
     let testImages = getTestImageSet();
     this.$store.dispatch('setTestImages', testImages);
   },
+
+  beforeMount() {
+    window.addEventListener('beforeunload', this.preventNav);
+  },
+
+  beforeDestroy() {
+    window.removeEventListener('beforeunload', this.preventNav);
+  },
+
+  beforeRouteLeave(to, from, next) {
+    if (!window.confirm('You will lose the current progress.')) {
+      return;
+    }
+    next();
+  },
+
   methods: {
     ...mapActions([
       'setIsLoadingFlag',
       'setIsSubmittingFlag',
+      'incrementImageId',
     ]),
+
+    preventNav(event) {
+      event.preventDefault();
+      event.returnValue = "";
+    },
 
     openGrabCutInfo() {
       this.displayInfo = true;
@@ -243,6 +280,14 @@ export default {
         icon: 'pi pi-exclamation-triangle',
         accept: () => {
           this.submit();
+          this.incrementImageId();
+          if (!this.isSessionFinished) {
+            this.$refs.ic.loadImage();
+          }
+          else {
+            // open popup
+            console.log('Finished');
+          }
         },
         reject: () => {},
       });

@@ -37,7 +37,7 @@ class GrabCutInteraction(db.Model):
     """
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_id = db.Column(db.String)
-    image_id = db.Column(db.Integer)
+    image_id = db.Column(db.String)
     annotated_pixels = db.Column(db.Integer)
     foreground_pixels = db.Column(db.Integer)
     background_pixels = db.Column(db.Integer)

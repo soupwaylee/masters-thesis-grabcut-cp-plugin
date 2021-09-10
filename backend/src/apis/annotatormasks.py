@@ -15,9 +15,9 @@ grabcutmask_fields = api.model('GrabCutMask', {
     'interactionRecordId': fields.String(required=True,
                                          description='UUID of the interaction record',
                                          attribute='interactionrecord_id'),
-    'imageId': fields.Integer(required=True,
-                              description='ID for the image that had been labelled for the current record',
-                              attribute='image_id'),
+    'imageId': fields.String(required=True,
+                             description='ID for the image that had been labelled for the current record',
+                             attribute='image_id'),
     'mask': fields.String(description='Comma separated foreground indices.')
 })
 
@@ -58,4 +58,5 @@ class GrabCutMaskList(Resource):
             # )
             return mask
         except exc.SQLAlchemyError as err:
+            app.logger.error(err)
             return f'DB error: {err}', 500

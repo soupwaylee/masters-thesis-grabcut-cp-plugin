@@ -1,5 +1,5 @@
 const state = {
-  testImages: null,
+  testImages: [],
 
   sessionId: "",
   currentImageIndex: 0,
@@ -26,6 +26,10 @@ const mutations = {
 
   SET_TEST_IMAGES(state, payload) {
     state.testImages = payload.testImages;
+  },
+
+  SET_IMAGE_INDEX(state, payload) {
+    state.currentImageIndex = payload.index;
   },
 
   SET_CURRENT_IMAGE_FIRST_INTERACTION(state, payload) {
@@ -93,6 +97,14 @@ const actions = {
     commit({
       type: 'SET_TEST_IMAGES',
       testImages: imageArray,
+    });
+  },
+
+  incrementImageId({ state, commit }) {
+    const newIndex = state.currentImageIndex + 1;
+    commit({
+      type: 'SET_IMAGE_INDEX',
+      index: newIndex,
     });
   },
 
@@ -258,6 +270,8 @@ const actions = {
 const getters = {
   getSessionId: state => state.sessionId,
   getCurrentImageIndex: state => state.currentImageIndex,
+  getCurrentImageId: state => state.testImages[state.currentImageIndex],
+  getNumberOfTestImages: state => state.testImages.length,
   getCurrentImageFirstInteraction: state => state.currentImageFirstInteraction,
   getScribbleCounter: state => state.scribbles,
   getForegroundScribbleCounter: state  => state.foregroundScribbles,

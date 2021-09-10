@@ -34,7 +34,7 @@ export default {
 
   data() {
     return {
-      displayForm: true,
+      displayForm: false,
       displayAgeGroupWarning: false,
       displayMissingAcademicFieldWarning: false,
 

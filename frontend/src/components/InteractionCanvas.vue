@@ -1,12 +1,13 @@
 <template>
   <div class="outsideWrapper">
-    <div class="insideWrapper">
+    <Skeleton width="100%" height="100%" v-if="isImageLoading"/>
+    <div class="insideWrapper" v-show="!isImageLoading">
       <img :src="dhmImageSrc" class="baseImage" ref="dhmImg">
       <img v-if="displayedSegmentation"
            :src="displayedSegmentation.dataUri"
            :style="segmentationOverlayStyle"
            class="segImage" ref="segImg">
-      <canvas :style="{visibility: isCanvasDisplaySelected ? 'visible' : 'hidden'}"
+      <canvas :style="{visibility: isCanvasVisible ? 'visible' : 'hidden'}"
         class="overlayCanvas" ref="canvas"></canvas>
     </div>
   </div>
@@ -56,29 +57,29 @@ export default {
   computed: {
     ...mapGetters({
       isFirstInteraction: 'getCurrentImageFirstInteraction',
+      isImageLoading: 'getIsImageLoading',
+      isMaskVisible: 'getIsMaskVisible',
+      isCanvasVisible: 'getIsCanvasVisible',
       brushType: 'getBrushType',
       brushSize: 'getBrushSize',
+      currentImageId: 'getCurrentImageId',
       segmentationContexts: 'getSegmentationContexts',
       segmentationCounter: 'getSegmentationCounter',
       latestSegmentation: 'getLatestSegmentation',
       displayedSegmentation: 'getDisplayedSegmentation',
-      isCanvasDisplaySelected: 'isCanvasDisplaySelected',
-      isMaskDisplaySelected: 'isMaskDisplaySelected'
     }),
 
     segmentationOverlayStyle() {
       return {
         opacity: 0.4,
-        visibility: this.isMaskDisplaySelected ? 'visible' : 'hidden',
+        visibility: this.isMaskVisible ? 'visible' : 'hidden',
       };
     }
   },
 
-  async created() {
-    await this.loadImage();
-  },
-
   mounted() {
+    this.loadImage();
+
     const canvas = this.$refs.canvas;
     this.canvasCtx = canvas.getContext('2d');
     canvas.addEventListener('mousedown', this.startMousePath);
@@ -87,6 +88,10 @@ export default {
     canvas.addEventListener('mouseup', this.stopMousePath);
     window.addEventListener('resize', this.resize);
     this.resize();
+  },
+
+  beforeDestroy() {
+    window.removeEventListener('resize', this.resize);
   },
 
   methods: {
@@ -99,11 +104,27 @@ export default {
       'punchInSegmentationTime',
       'incrementSubmissionCounter',
 
+      'setIsImageLoadingFlag',
       'setIsFirstInteractionFlag',
-      'setIsCanvasEmptyFlag',
 
       'setSegmentationForDisplay',
     ]),
+
+    async loadImage() {
+      this.setIsImageLoadingFlag(true);
+      await grabcutAS.getDHMImage(this.currentImageId)
+        .then(imageDataArray => {
+          this.dhmImageSrc = getImageDataURIFromDataArray(
+            imageDataArray,
+            this.dhmColorSpace,
+            this.width,
+            this.height
+          );
+        }, error => {
+          console.error(error);
+        });
+      this.setIsImageLoadingFlag(false);
+    },
 
     clearDrawings() {
       this.canvasCtx.clearRect(0, 0, this.canvasCtx.canvas.width, this.canvasCtx.canvas.height);
@@ -222,40 +243,6 @@ export default {
       this.points.splice(-undoScribbleLength);
       this.decrementScribbleCount();
       this.redrawAllPoints();
-    },
-
-    async loadImage() {
-      let currentImgId = 1;  //TODO fix this hard-coded index
-
-      let colors = colormap({
-        'colormap': 'jet',
-        'nshades': 255,
-        'format': 'rgba',
-        'alpha': 1
-      });
-
-      await grabcutAS.getDHMImage(currentImgId).then(imageDataArray => {
-        this.dhmImageSrc = getImageDataURIFromDataArray(imageDataArray, colors, this.width, this.height);
-      }, error => {
-        console.error(error);
-      });
-    },
-
-    hasScribbles() {
-      let isPixelWhite = (elt, idx, arr) => {
-        if (idx % 4 === 0) {
-          return arr[idx] === 0
-            && arr[idx + 1] === 0
-            && arr[idx + 2] === 0
-            && arr[idx + 3] === 255;
-        }
-      };
-
-      return this.canvasCtx.getImageData(
-        0,
-        0,
-        this.canvasCtx.canvas.width,
-        this.canvasCtx.canvas.height).every(isPixelWhite);
     },
 
     async segment() {

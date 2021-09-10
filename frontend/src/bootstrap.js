@@ -18,7 +18,9 @@ import ProgressBar from 'primevue/progressbar';
 import RadioButton from 'primevue/radiobutton';
 import Slider from 'primevue/slider';
 import SelectButton from 'primevue/selectbutton';
+import Skeleton from 'primevue/skeleton';
 import Toast from 'primevue/toast';
+import ToggleButton from 'primevue/togglebutton';
 import DataView from 'primevue/dataview';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -45,7 +47,9 @@ app.component('Dialog', Dialog)
 app.component('RadioButton', RadioButton)
 app.component('Slider', Slider)
 app.component('SelectButton', SelectButton)
+app.component('Skeleton', Skeleton)
 app.component('Toast', Toast)
+app.component('ToggleButton', ToggleButton)
 app.component('DataView', DataView)
 app.component('DataTable', DataTable)
 app.component('Column', Column)

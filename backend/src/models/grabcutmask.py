@@ -8,7 +8,7 @@ class GrabCutMask(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_id = db.Column(db.String)
     interactionrecord_id = db.Column(db.String)
-    image_id = db.Column(db.Integer)
+    image_id = db.Column(db.String)
     mask = db.Column(db.Text)
 
     def __repr__(self):

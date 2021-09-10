@@ -2,7 +2,10 @@ const state = {
   brushType: 'fg',
   brushSize: 1,
   isCanvasEmpty: true,
+  isImageLoading: false,
   currentlyDisplayedSegmentation: null,
+  isCanvasVisible: true,
+  isMaskVisible: true,
   visibilityToggleCategories: [
     {name: 'Canvas', key: 'C'},
     {name: 'Mask', key: 'M'},
@@ -23,6 +26,15 @@ const mutations = {
   SET_IS_CANVAS_EMPTY (state, payload) {
     state.isCanvasEmpty = payload.isEmpty;
   },
+  SET_IS_IMAGE_LOADING (state, payload) {
+    state.isImageLoading = payload.isLoading;
+  },
+  SET_IS_CANVAS_VISIBLE (state, payload) {
+    state.isCanvasVisible = payload.isCanvasVisible;
+  },
+  SET_IS_MASK_VISIBLE (state, payload) {
+    state.isMaskVisible = payload.isMaskVisible;
+  },
   SET_CURRENTLY_DISPLAYED_SEGMENTATION (state, payload) {
     state.currentlyDisplayedSegmentation = payload.segmentation;
   },
@@ -40,6 +52,9 @@ const actions = {
   },
   setIsCanvasEmptyFlag({ commit }, payload) {
     commit('SET_IS_CANVAS_EMPTY', payload);
+  },
+  setIsImageLoadingFlag({ commit }, isLoading) {
+    commit({type: 'SET_IS_IMAGE_LOADING', isLoading: isLoading});
   },
   setSegmentationForDisplay ({ commit }, segmentation) {
     commit({
@@ -73,6 +88,9 @@ const getters = {
   getBrushType: state => state.brushType,
   getBrushSize: state => state.brushSize,
   getIsCanvasEmpty: state => state.brushSize,
+  getIsImageLoading: state => state.isImageLoading,
+  getIsCanvasVisible: state => state.isCanvasVisible,
+  getIsMaskVisible: state => state.isMaskVisible,
   getDisplayedSegmentation: state => state.currentlyDisplayedSegmentation,
   getVisibilityToggleCategories: state => state.visibilityToggleCategories,
   getSelectedVisibilities: state => state.selectedVisibilities,

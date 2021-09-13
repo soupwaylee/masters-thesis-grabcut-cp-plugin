@@ -219,7 +219,7 @@ export default {
     window.addEventListener('beforeunload', this.preventNav);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('beforeunload', this.preventNav);
   },
 

@@ -1,5 +1,4 @@
 import {APIService as grabcutAPIService} from "@/api/grabcutAPI";
-import {root} from "../../../../.eslintrc";
 
 const grabcutService = new grabcutAPIService();
 

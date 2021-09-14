@@ -6,14 +6,6 @@ const state = {
   currentlyDisplayedSegmentation: null,
   isCanvasVisible: true,
   isMaskVisible: true,
-  visibilityToggleCategories: [
-    {name: 'Canvas', key: 'C'},
-    {name: 'Mask', key: 'M'},
-  ],
-  selectedVisibilities: [
-    {name: 'Canvas', key: 'C'},
-    {name: 'Mask', key: 'M'},
-  ],
 };
 
 const mutations = {
@@ -38,9 +30,6 @@ const mutations = {
   SET_CURRENTLY_DISPLAYED_SEGMENTATION (state, payload) {
     state.currentlyDisplayedSegmentation = payload.segmentation;
   },
-  SET_SELECTED_VISIBILITIES (state, payload) {
-    state.selectedVisibilities = payload.selection;
-  },
 };
 
 const actions = {
@@ -62,12 +51,6 @@ const actions = {
       segmentation: segmentation
     });
   },
-  setVisibilitySelection ({ commit }, selection) {
-    commit({
-      type: 'SET_SELECTED_VISIBILITIES',
-      selection: selection,
-    });
-  },
   resetCanvasState({ commit }) {
     commit({
       type: 'SET_BRUSHTYPE',
@@ -81,6 +64,15 @@ const actions = {
       type: 'SET_CURRENTLY_DISPLAYED_SEGMENTATION',
       segmentation: null
     });
+    commit({
+      type: 'SET_IS_CANVAS_VISIBLE',
+      isCanvasVisible: true,
+    });
+    commit({
+      type: 'SET_IS_MASK_VISIBLE',
+      isMaskVisible: true,
+    });
+
   }
 };
 
@@ -92,10 +84,6 @@ const getters = {
   getIsCanvasVisible: state => state.isCanvasVisible,
   getIsMaskVisible: state => state.isMaskVisible,
   getDisplayedSegmentation: state => state.currentlyDisplayedSegmentation,
-  getVisibilityToggleCategories: state => state.visibilityToggleCategories,
-  getSelectedVisibilities: state => state.selectedVisibilities,
-  isCanvasDisplaySelected: state => state.selectedVisibilities.some(selection => selection.key === 'C'),
-  isMaskDisplaySelected: state => state.selectedVisibilities.some(selection => selection.key === 'M'),
 };
 
 const canvasModule = {

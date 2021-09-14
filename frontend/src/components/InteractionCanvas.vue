@@ -79,19 +79,12 @@ export default {
 
   mounted() {
     this.loadImage();
-
     const canvas = this.$refs.canvas;
     this.canvasCtx = canvas.getContext('2d');
     canvas.addEventListener('mousedown', this.startMousePath);
-    //TODO mouseout will also trigger console log action..
     canvas.addEventListener('mouseout', this.stopMousePath);
     canvas.addEventListener('mouseup', this.stopMousePath);
-    window.addEventListener('resize', this.resize);
     this.resize();
-  },
-
-  beforeUnmount() {
-    window.removeEventListener('resize', this.resize);
   },
 
   methods: {
@@ -106,6 +99,7 @@ export default {
 
       'setIsImageLoadingFlag',
       'setIsFirstInteractionFlag',
+      'setHasNewChanges',
 
       'setSegmentationForDisplay',
     ]),
@@ -135,6 +129,7 @@ export default {
       this.pointsPerScribble = [];
       this.resetScribbleCount();
       this.$store.dispatch('setPreviousScribbleType', null);
+      this.setHasNewChanges(true);
     },
 
     setUpBrush() {
@@ -149,8 +144,8 @@ export default {
 
     repositionMouse(e) {
       let {left, top} = this.$refs.canvas.getBoundingClientRect();
-      this.mouseX = parseInt(e.clientX - left);
-      this.mouseY = parseInt(e.clientY - top);
+      this.mouseX = Math.trunc(e.clientX - left);
+      this.mouseY = Math.trunc(e.clientY - top);
     },
 
     startMousePath(e) {
@@ -158,6 +153,7 @@ export default {
         this.punchInImageInteractionStartingTime();
         this.setIsFirstInteractionFlag(false);
       }
+      this.setHasNewChanges(true);
 
       this.setUpBrush();
       this.$refs.canvas.addEventListener('mousemove', this.draw);
@@ -243,6 +239,7 @@ export default {
       this.points.splice(-undoScribbleLength);
       this.decrementScribbleCount();
       this.redrawAllPoints();
+      this.setHasNewChanges(true);
     },
 
     async segment() {
@@ -255,6 +252,7 @@ export default {
       }).then(
         () => {
           this.$store.dispatch('setSegmentationForDisplay', this.latestSegmentation);
+          this.setHasNewChanges(false);
         }
       );
     },

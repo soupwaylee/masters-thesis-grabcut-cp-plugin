@@ -46,11 +46,11 @@
                     @click="undo()"
                     :disabled="isLoadingOrSubmitting || hasNoScribbles"/>
           </div>
+<!--          <div class="p-mx-2 p-my-2">-->
+<!--            <Button icon="pi pi-refresh" label="Redo" :disabled="true"/>-->
+<!--          </div>-->
           <div class="p-mx-2 p-my-2">
-            <Button icon="pi pi-refresh" label="Redo" :disabled="true"/>
-          </div>
-          <div class="p-mx-2 p-my-2">
-            <Button icon="pi pi-trash" label="Clear"
+            <Button icon="pi pi-trash" label="Clear All"
                     @click="clear()"
                     :disabled="isLoadingOrSubmitting || hasNoScribbles"/>
           </div>
@@ -70,7 +70,7 @@
             <Button icon="pi pi-cloud-upload" label="Segment"
                     @click="segment()"
                     :loading="isLoadingSegmentation"
-                    :disabled="hasNoScribbles || isSubmittingSegmentation || isImageLoading"/>
+                    :disabled="!hasMadeNewEdits || hasNoScribbles || isSubmittingSegmentation || isImageLoading"/>
           </div>
           <div class="p-mx-2 p-my-2">
             <Button icon="pi pi-check" label="Finish"
@@ -123,6 +123,7 @@ export default {
       isLoadingSegmentation: 'isLoadingSegmentation',
       isSubmittingSegmentation: 'isSubmittingSegmentation',
       hasNoScribbles: 'hasNoScribbles',
+      hasMadeNewEdits: 'getHasMadeNewEdits',
       hasSegmentations: 'hasSegmentations',
       segmentationContexts: 'getSegmentationContexts',
       scribbleCounter: 'getScribbleCounter',
@@ -276,8 +277,8 @@ export default {
     finish(event) {
       this.$confirm.require({
         target: event.currentTarget,
-        message: 'Are you sure you want to submit the displayed segmentation mask and move on to the next image?',
-        icon: 'pi pi-exclamation-triangle',
+        message: 'Are you sure you want to submit the displayed segmentation mask and move on?',
+        icon: 'pi pi-info-circle',
         accept: () => {
           this.submit();
           this.incrementImageId();
@@ -291,7 +292,6 @@ export default {
         },
         reject: () => {},
       });
-      //TODO increment image ID
     },
 
     async submit() {

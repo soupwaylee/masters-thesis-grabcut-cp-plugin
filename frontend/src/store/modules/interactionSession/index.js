@@ -15,6 +15,8 @@ const state = {
   submissionCounter: 0,
   segmentationRequestTime: null,
 
+  hasNewChanges: false,
+
   isLoadingSegmentation: false,
   isSubmittingSegmentation: false,
 };
@@ -38,6 +40,10 @@ const mutations = {
 
   SET_CURRENT_IMAGE_STARTED_AT(state, payload) {
     state.currentImageInteractionStartingTime = payload.interactionStartingTime;
+  },
+
+  SET_HAS_NEW_CHANGES(state, payload) {
+    state.hasNewChanges = payload.hasMadeNewEdits;
   },
 
   SET_PREVIOUS_SCRIBBLE_TYPE(state, payload) {
@@ -121,6 +127,13 @@ const actions = {
     commit({
       type: 'SET_CURRENT_IMAGE_STARTED_AT',
       interactionStartingTime: rightNowUTC,
+    });
+  },
+
+  setHasNewChanges({ commit }, hasMadeNewEdits) {
+    commit({
+      type: 'SET_HAS_NEW_CHANGES',
+      hasMadeNewEdits: hasMadeNewEdits,
     });
   },
 
@@ -236,6 +249,11 @@ const actions = {
     });
 
     commit({
+      type: 'SET_HAS_NEW_CHANGES',
+      hasMadeNewEdits: false,
+    });
+
+    commit({
       type: 'SET_CURRENT_IMAGE_STARTED_AT',
       interactionStartingTime: null,
     });
@@ -273,6 +291,7 @@ const getters = {
   getCurrentImageId: state => state.testImages[state.currentImageIndex],
   getNumberOfTestImages: state => state.testImages.length,
   getCurrentImageFirstInteraction: state => state.currentImageFirstInteraction,
+  getHasMadeNewEdits: state => state.hasNewChanges,
   getScribbleCounter: state => state.scribbles,
   getForegroundScribbleCounter: state  => state.foregroundScribbles,
   getBackgroundScribbleCounter: state  => state.backgroundScribbles,

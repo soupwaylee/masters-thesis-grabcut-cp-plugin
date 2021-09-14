@@ -1,5 +1,10 @@
 <template>
   <ParticipantDataDialog></ParticipantDataDialog>
+  <Dialog v-model:visible="displayThankYou" :style="{width: '50vw'}" :modal="true"
+          :closable="false" :closeOnEscape="false">
+    <p class="p-mb-3 p-text-center">Thank you for your participation!</p>
+    <p class="p-mb-3 p-text-center">You may close the application tab now.</p>
+  </Dialog>
   <Card class="noTotalWidth p-shadow-5">
     <template #title>
       <div class="title-wrapper">
@@ -107,6 +112,7 @@ export default {
   data() {
     return {
       displayInfo: false, //TODO this should be true for deployment (for the purpose of showing instructions etc.)
+      displayThankYou: false,
       brushOptions: [
         {name: 'Foreground', value: 'fg', icon: 'pi pi-circle-off'},
         {name: 'Background', value: 'bg', icon: 'pi pi-circle-on'}
@@ -209,6 +215,8 @@ export default {
   },
 
   created() {
+    window.addEventListener('beforeunload', this.preventNav,  { capture: true });
+
     let randId = [...Array(64)].map(() => Math.floor(Math.random()*36).toString(36)).join('');
     this.$store.dispatch('setSessionId', randId);
 
@@ -216,19 +224,17 @@ export default {
     this.$store.dispatch('setTestImages', testImages);
   },
 
-  beforeMount() {
-    window.addEventListener('beforeunload', this.preventNav);
-  },
-
   beforeUnmount() {
-    window.removeEventListener('beforeunload', this.preventNav);
+    window.removeEventListener('beforeunload', this.preventNav, { capture: true });
   },
 
   beforeRouteLeave(to, from, next) {
-    if (!window.confirm('You will lose the current progress.')) {
-      return;
+    if (window.confirm('You will lose your current progress.')) {
+      next();
     }
-    next();
+    else {
+      next(false);
+    }
   },
 
   methods: {
@@ -286,8 +292,8 @@ export default {
             this.$refs.ic.loadImage();
           }
           else {
-            // open popup
-            console.log('Finished');
+            window.removeEventListener('beforeunload', this.preventNav);
+            this.displayThankYou = true;
           }
         },
         reject: () => {},

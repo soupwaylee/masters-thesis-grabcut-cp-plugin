@@ -1,7 +1,5 @@
 <template>
   <div id="nav">
-    <router-link to="/">Example</router-link> |
-    <router-link to="/about">About this plugin</router-link>
   </div>
   <router-view/>
 </template>

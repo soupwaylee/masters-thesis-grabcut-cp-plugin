@@ -9,23 +9,6 @@
     <template #title>
       <div class="title-wrapper">
         <span class="title">GrabCut</span>
-        <Button icon="pi pi-info-circle"
-                @click="openGrabCutInfo"/>
-        <Dialog v-model:visible="displayInfo"
-                :closable="true"
-                :closeOnEscape="true"
-                :dismissableMask="true">
-          <div class="dialog-header">
-            <h3>GrabCut</h3>
-          </div>
-
-          This is GrabCut. Explanations will follow.
-          <!-- Mark a subset of foreground and background pixels. -->
-          <!-- Submit to check the segmentation output based on your provided input. -->
-          <!-- Click Finish to move to the next image. -->
-          <!-- Once you click Finish you can't go back to the previous image -->
-
-        </Dialog>
       </div>
     </template>
     <template #content>
@@ -111,7 +94,6 @@ export default {
   },
   data() {
     return {
-      displayInfo: false, //TODO this should be true for deployment (for the purpose of showing instructions etc.)
       displayThankYou: false,
       brushOptions: [
         {name: 'Foreground', value: 'fg', icon: 'pi pi-circle-off'},
@@ -247,10 +229,6 @@ export default {
     preventNav(event) {
       event.preventDefault();
       event.returnValue = "";
-    },
-
-    openGrabCutInfo() {
-      this.displayInfo = true;
     },
 
     undo() {

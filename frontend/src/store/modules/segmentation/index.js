@@ -86,20 +86,15 @@ const actions = {
   },
 
   async submitDisplayedMask({rootState}) {
-    const sessionId = rootState.interactionSessionModule.sessionId;
-    const imageId = rootState.interactionSessionModule.currentImageIndex;
-    const interactionRecordId = rootState.canvasModule.currentlyDisplayedSegmentation.interactionRecordId;
-    const currentReducedMask = rootState.canvasModule.currentlyDisplayedSegmentation.reducedMask.toString();
+    const interactionState = rootState.interactionSessionModule;
+    const canvasState = rootState.canvasModule;
 
-    await grabcutService
-      .submitSegmentation(sessionId, imageId, interactionRecordId, currentReducedMask)
-      .then(response => {
-        console.log(`Success! Mask for record ${response.interactionRecordId} created.`);
-      }, error => {
-        console.log(error);
-        // TODO throw something catchable s.t. Home view does not clear the state when the mask submission fails, e.g.
-        // return Promise.reject('Failure.');
-      });
+    const sessionId = interactionState.sessionId;
+    const imageId = interactionState.testImages[interactionState.currentImageIndex];
+    const interactionRecordId = canvasState.currentlyDisplayedSegmentation.interactionRecordId;
+    const currentReducedMask = canvasState.currentlyDisplayedSegmentation.reducedMask.toString();
+
+    await grabcutService.submitSegmentation(sessionId, imageId, interactionRecordId, currentReducedMask);
   },
 
 };

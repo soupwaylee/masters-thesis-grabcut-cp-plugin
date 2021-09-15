@@ -3,7 +3,7 @@
   <Dialog v-model:visible="displayForm" :style="{width: '50vw'}"
           :modal="true" :closable="false" :closeOnEscape="false">
     <template #header>
-      <h3>Thank you for , Tell us a bit about yourself.</h3>
+      <h3>Please tell us a bit about yourself.</h3>
     </template>
     <div>
       <div>
@@ -13,7 +13,9 @@
         <p :style="missingAgeGroupStyle">* Please make a selection</p>
       </div>
       <div>
-        <h4>Which academic field do you currently identify with most?</h4>
+        <h4>Which academic background do you identify with?</h4>
+        <p>If you're in an interdisciplinary area,
+          pick the higher level field which you most strongly identify with.</p>
         <Dropdown v-model="selectedAcademicField" :options="academicFieldOptions" optionLabel="field"
                   optionValue="field" placeholder="- Select -"/>
         <p :style="missingAcademicFieldStyle">* Please make a selection</p>
@@ -34,7 +36,7 @@ export default {
 
   data() {
     return {
-      displayForm: false,
+      displayForm: true,
       displayAgeGroupWarning: false,
       displayMissingAcademicFieldWarning: false,
 
@@ -48,20 +50,20 @@ export default {
         {range: 'Above 64', rangeId: 6}
       ],
       academicFieldOptions: [
-        {field: 'Medicine and Health', fieldId: 0},
+        {field: 'Medicine and Health Science', fieldId: 0},
         {field: 'Electrical and Computer Engineering', fieldId: 1},
         {field: 'Computer Science', fieldId: 2},
         {field: 'Mathematics', fieldId: 3},
         {field: 'Physics', fieldId: 4},
-        {field: 'Management', fieldId: 5},
+        {field: 'Management and Business Studies', fieldId: 5},
         {field: 'Biology', fieldId: 6},
         {field: '(Bio-)chemistry', fieldId: 7},
-        {field: 'Chemical Engineering, Material Sciences', fieldId: 8},
+        {field: 'Chemical Engineering and Material Science', fieldId: 8},
         {field: 'Mechanical Engineering', fieldId: 9},
-        {field: 'Humanities (e.g. Philosphy, Languages, Law)', fieldId: 10},
-        {field: 'Social Sciences (e.g. Political Sciences, Psychology)', fieldId: 11},
-        {field: 'Education Sciences', fieldId: 12},
-        {field: 'Civil Engineering / Architecture', fieldId: 13}
+        {field: 'Humanities (e.g. Philosphy, Languages, Arts, Law)', fieldId: 10},
+        {field: 'Social Science (e.g. Political Sciences, Psychology)', fieldId: 11},
+        {field: 'Education Science', fieldId: 12},
+        {field: 'Civil-, Geo- and Environmental Engineering', fieldId: 13}
       ],
     };
   },

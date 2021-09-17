@@ -1,4 +1,5 @@
 <template>
+  <meta charset=“UTF-8”>
   <ParticipantDataDialog></ParticipantDataDialog>
   <Dialog v-model:visible="displayThankYou" :style="{width: '50vw'}" :modal="true"
           :closable="false" :closeOnEscape="false">
@@ -8,19 +9,11 @@
   <Card class="noTotalWidth p-shadow-5">
     <template #title>
       <div class="title-wrapper">
-        <span class="title">GrabCut</span>
+        <span class="title"> &#x1F52C; &#x1F9A0; &#x1F58D; &#x1F3A8; &#x2705; &#x1F19A; &#x274E; &#x1F914; &#x1F4E4; </span>
       </div>
     </template>
     <template #content>
       <div class="tool-wrapper">
-        <div class="p-d-flex p-flex-column p-jc-center">
-          <label class="p-my-1">Brush Size: {{ brushSize }}</label>
-          <Slider class="p-my-1" id="sizeSlider"
-                  v-model="brushSize"
-                  :max="brushSizeRange[1]"
-                  :min="brushSizeRange[0]"
-          />
-        </div>
         <div class="p-d-flex p-jc-center">
           <div class="p-mx-2 p-my-2">
             <SelectButton v-model="brushType"
@@ -28,6 +21,14 @@
                           dataKey="value"
                           optionLabel="name"
                           optionValue="value"/>
+          </div>
+          <div class="p-mx-2 p-my-2">
+            <Dropdown
+              v-model="brushSize"
+              :options="brushSizes"
+              optionLabel="label"
+              optionValue="size"
+              placeholder="2px"/>
           </div>
           <div class="p-mx-2 p-my-2">
             <Button icon="pi pi-undo" label="Undo"
@@ -49,19 +50,28 @@
         <div class="p-d-flex p-flex-column p-jc-start p-ml-2 p-my-2">
           <ToggleButton class="p-mx-1 p-my-2" v-model="isCanvasVisible" onLabel="Drawings" offLabel="Drawings" onIcon="pi pi-eye" offIcon="pi pi-eye-slash" />
           <ToggleButton class="p-mx-1 p-my-2" v-model="isMaskVisible" onLabel="Segmentation" offLabel="Segmentation" onIcon="pi pi-eye" offIcon="pi pi-eye-slash" />
+          <div class="p-d-flex p-flex-column p-jc-start p-mx-1 p-my-2">
+            <p class="p-jc-start p-my-2">Mask Opacity: {{ `${maskOpacity} %` }}</p>
+            <Slider class="p-my-2" id="maskOpacitySlider"
+                    v-model="maskOpacity"
+                    :step="5"
+                    :min="0"
+                    :max="100"
+            />
+          </div>
         </div>
       </div>
       <div class="progression-wrapper">
         <ConfirmPopup></ConfirmPopup>
         <div class="p-d-flex p-jc-center">
           <div class="p-mx-2 p-my-2">
-            <Button icon="pi pi-cloud-upload" label="Segment"
+            <Button icon="pi pi-cloud-upload" label="Segment" v-tooltip.bottom="'Submit scribbles to receive a segmentation'"
                     @click="segment()"
                     :loading="isLoadingSegmentation"
                     :disabled="!hasMadeNewEdits || hasNoScribbles || isSubmittingSegmentation || isImageLoading"/>
           </div>
           <div class="p-mx-2 p-my-2">
-            <Button icon="pi pi-check" label="Finish"
+            <Button icon="pi pi-check" label="Finish" v-tooltip.bottom="'Submit mask and move on to next image'"
                     @click="finish($event)"
                     :loading="isSubmittingSegmentation"
                     :disabled="(selectedSegmentation === null) || isLoadingSegmentation || isImageLoading"/>
@@ -99,12 +109,12 @@ export default {
         {name: 'Foreground', value: 'fg', icon: 'pi pi-circle-off'},
         {name: 'Background', value: 'bg', icon: 'pi pi-circle-on'}
       ],
-      brushSizeRange: [1, 30],
     };
   },
 
   computed: {
     ...mapGetters({
+      brushSizes: 'getBrushSizes',
       currentImageIndex: 'getCurrentImageIndex',
       numberOfTestImages: 'getNumberOfTestImages',
       isImageLoading: 'getIsImageLoading',
@@ -155,6 +165,18 @@ export default {
         this.$store.commit({
           type: 'SET_BRUSHSIZE',
           brushSize: size
+        });
+      }
+    },
+
+    maskOpacity: {
+      get() {
+        return this.$store.getters.getMaskOpacity;
+      },
+      set(opacity) {
+        this.$store.commit({
+          type: 'SET_MASK_OPACITY',
+          opacity: opacity
         });
       }
     },
@@ -261,8 +283,10 @@ export default {
     finish(event) {
       this.$confirm.require({
         target: event.currentTarget,
-        message: 'Are you sure you want to submit the displayed segmentation mask and move on?',
-        icon: 'pi pi-info-circle',
+        message: 'Have you picked your most accurate segmentation from the dropdown menu?',
+        icon: 'pi pi-question-circle',
+        acceptLabel: 'Proceed',
+        rejectLabel: 'Cancel',
         accept: () => {
           this.submit();
           this.incrementImageId();
@@ -302,7 +326,7 @@ export default {
   }
 
   .p-slider-horizontal {
-    width: 75%;
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
   }

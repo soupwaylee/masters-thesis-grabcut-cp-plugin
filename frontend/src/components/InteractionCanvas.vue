@@ -62,6 +62,7 @@ export default {
       isCanvasVisible: 'getIsCanvasVisible',
       brushType: 'getBrushType',
       brushSize: 'getBrushSize',
+      maskOpacity: 'getMaskOpacity',
       currentImageId: 'getCurrentImageId',
       segmentationContexts: 'getSegmentationContexts',
       segmentationCounter: 'getSegmentationCounter',
@@ -71,7 +72,7 @@ export default {
 
     segmentationOverlayStyle() {
       return {
-        opacity: 0.4,
+        opacity: (this.maskOpacity / 100).toPrecision(2),
         visibility: this.isMaskVisible ? 'visible' : 'hidden',
       };
     }
@@ -133,7 +134,7 @@ export default {
     },
 
     setUpBrush() {
-      this.canvasCtx.lineCap = 'square';
+      this.canvasCtx.lineCap = 'round';
       if (this.canvasCtx.lineWidth !== this.brushSize) {
         this.canvasCtx.lineWidth = this.brushSize;
       }

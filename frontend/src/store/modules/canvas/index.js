@@ -1,6 +1,16 @@
 const state = {
   brushType: 'fg',
-  brushSize: 1,
+  brushSize: 2,
+  brushSizes: [
+    {label: '2px', size: 2},
+    {label: '4px', size: 4},
+    {label: '8px', size: 8},
+    {label: '12px', size: 12},
+    {label: '16px', size: 16},
+    {label: '20px', size: 20},
+    {label: '24px', size: 24},
+  ],
+  maskOpacity: 40,
   isCanvasEmpty: true,
   isImageLoading: false,
   currentlyDisplayedSegmentation: null,
@@ -14,6 +24,9 @@ const mutations = {
   },
   SET_BRUSHSIZE (state, payload) {
     state.brushSize = payload.brushSize;
+  },
+  SET_MASK_OPACITY (state, payload) {
+    state.maskOpacity = payload.opacity;
   },
   SET_IS_CANVAS_EMPTY (state, payload) {
     state.isCanvasEmpty = payload.isEmpty;
@@ -79,6 +92,8 @@ const actions = {
 const getters = {
   getBrushType: state => state.brushType,
   getBrushSize: state => state.brushSize,
+  getBrushSizes: state => state.brushSizes,
+  getMaskOpacity: state => state.maskOpacity,
   getIsCanvasEmpty: state => state.brushSize,
   getIsImageLoading: state => state.isImageLoading,
   getIsCanvasVisible: state => state.isCanvasVisible,

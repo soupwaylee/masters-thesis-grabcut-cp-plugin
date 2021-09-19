@@ -161,7 +161,7 @@ const actions = {
       type: 'SET_SCRIBBLES',
       scribbles: newCounter
     });
-    let previousScribbleIsForeground = rootState.canvasModule.brushType === 'fg';
+    let previousScribbleIsForeground = state.previousScribbleType === 'fg';
     let {newTypeCount, commitType} = {
       newTypeCount: previousScribbleIsForeground ? state.foregroundScribbles - 1 : state.backgroundScribbles - 1,
       commitType: previousScribbleIsForeground ? 'SET_FOREGROUND_SCRIBBLES' : 'SET_BACKGROUND_SCRIBBLES',

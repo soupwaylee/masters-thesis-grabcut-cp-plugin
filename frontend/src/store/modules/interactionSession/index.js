@@ -148,7 +148,7 @@ const actions = {
     });
   },
 
-  decrementScribbleCount({ state, commit, rootState }) {
+  decrementScribbleCount({ state, commit }) {
     if (state.scribbles === 0) return;
     let newCounter = state.scribbles - 1;
     commit({

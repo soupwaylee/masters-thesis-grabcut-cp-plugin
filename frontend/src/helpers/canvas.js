@@ -1,6 +1,8 @@
 const colorToPixelType = {
   'rgba(255, 0, 0, 1)': 'fg',
   'rgba(0, 0, 255, 1)': 'bg',
+  '#ff0000': 'fg',
+  '#0000ff': 'bg',
 }
 
 const pixelTypeToColor = {

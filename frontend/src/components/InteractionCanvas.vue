@@ -271,7 +271,7 @@ export default {
 <style scoped lang="scss">
   .outsideWrapper {
     width: 512px;
-    height: 382px;
+    height: 384px;
     display: block;
     margin: 0 auto;
   }

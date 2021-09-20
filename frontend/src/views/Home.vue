@@ -288,31 +288,33 @@ export default {
         acceptLabel: 'Proceed',
         rejectLabel: 'Cancel',
         accept: () => {
-          this.submit();
-          this.incrementImageId();
-          if (!this.isSessionFinished) {
-            this.$refs.ic.loadImage();
-          }
-          else {
-            window.removeEventListener('beforeunload', this.preventNav);
-            this.displayThankYou = true;
-          }
+          this.handleSubmission();
         },
         reject: () => {},
       });
     },
 
-    async submit() {
+    async handleSubmission() {
       this.setIsSubmittingFlag(true);
-      await this.$refs.ic.submitDisplayedMask()
-        .then(
-          () => {
-            this.$toast.add(segmentationSubmission.success);
-          },
-          error => {
-            console.error(error);
-          }
-        );
+      try {
+        await this.$store.dispatch('submitDisplayedMask');
+      } catch(e) {
+        console.error(e);
+        this.$toast.add(segmentationSubmission.error);
+        this.setIsSubmittingFlag(false);
+        return;
+      }
+
+      this.$toast.add(segmentationSubmission.success);
+      this.incrementImageId();
+      if (!this.isSessionFinished) {
+        this.$refs.ic.resetForNextImage();
+        await this.$refs.ic.loadImage();  //TODO possible error unhandled
+      }
+      else {
+        window.removeEventListener('beforeunload', this.preventNav);
+        this.displayThankYou = true;
+      }
       this.setIsSubmittingFlag(false);
     },
   },

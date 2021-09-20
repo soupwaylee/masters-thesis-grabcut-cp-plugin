@@ -258,17 +258,12 @@ export default {
       );
     },
 
-    async submitDisplayedMask() {
-      return this.$store.dispatch('submitDisplayedMask')
-        .then(
-          () => {
-            this.$store.dispatch('resetInteractionState');
-            this.$store.dispatch('resetCanvasState');
-            this.$store.dispatch('clearSegmentations');
-            this.clearDrawings();
-          }
-        );
-    }
+    resetForNextImage() {
+      this.$store.dispatch('resetInteractionState');
+      this.$store.dispatch('resetCanvasState');
+      this.$store.dispatch('clearSegmentations');
+      this.clearDrawings();
+    },
   }
 }
 </script>

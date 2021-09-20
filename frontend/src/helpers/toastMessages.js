@@ -47,6 +47,11 @@ const segmentationSubmission = {
     life: 4000,
   },
   error: {
+    severity:'error',
+    summary: 'Error',
+    detail:'Oops, something went wrong - please re-submit',
+    group: 'br',
+    life: 5500,
   },
 };
 

@@ -13,8 +13,6 @@ const state = {
   foregroundPixelsAtSubmission: 0,
   backgroundPixelsAtSubmission: 0,
   submissionCounter: 0,
-  segmentationRequestTime: null,
-
   hasNewChanges: false,
 
   isLoadingSegmentation: false,
@@ -76,10 +74,6 @@ const mutations = {
 
   SET_SUBMISSION_COUNTER(state, payload) {
     state.submissionCounter = payload.value;
-  },
-
-  SET_SEGMENTATION_REQUEST_TIME(state, payload) {
-    state.segmentationRequestTime = payload.segmentationRequestTime;
   },
 
   SET_IS_LOADING_SEGMENTATION(state, payload) {
@@ -219,15 +213,6 @@ const actions = {
     });
   },
 
-  punchInSegmentationTime({ commit }) {
-    let now = new Date();
-    let rightNowUTC = now.toUTCString();
-    commit({
-      type: 'SET_SEGMENTATION_REQUEST_TIME',
-      segmentationRequestTime: rightNowUTC,
-    });
-  },
-
   setIsLoadingFlag({ commit }, isLoading) {
     commit({
       type: 'SET_IS_LOADING_SEGMENTATION',
@@ -276,11 +261,6 @@ const actions = {
     commit({
       type: 'SET_SUBMISSION_COUNTER',
       value: 0,
-    });
-
-    commit({
-      type: 'SET_SEGMENTATION_REQUEST_TIME',
-      segmentationRequestTime: null,
     });
   },
 };

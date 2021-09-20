@@ -55,9 +55,18 @@ const segmentationSubmission = {
   },
 };
 
+const fatalError = {
+  severity:'error',
+  summary: 'Oops',
+  detail:'Sorry about that, this should not be happening - please refresh the page to re-start from the beginning.',
+  group: 'br',
+  life: 5500,
+};
+
 export {
   participantDataSubmission,
   submissionWarnings,
   scribbleSubmissionSuccess,
-  segmentationSubmission
+  segmentationSubmission,
+  fatalError
 };

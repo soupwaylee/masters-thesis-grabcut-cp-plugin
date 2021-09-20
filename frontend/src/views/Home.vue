@@ -93,7 +93,12 @@
 import {mapGetters, mapActions} from 'vuex';
 import InteractionCanvas from "@/components/InteractionCanvas";
 import ParticipantDataDialog from "@/components/ParticipantDataDialog";
-import {submissionWarnings, scribbleSubmissionSuccess, segmentationSubmission} from "@/helpers/toastMessages";
+import {
+  submissionWarnings,
+  scribbleSubmissionSuccess,
+  segmentationSubmission,
+  fatalError
+} from "@/helpers/toastMessages";
 import {getTestImageSet} from "@/helpers/testImages";
 
 export default {
@@ -272,11 +277,19 @@ export default {
       }
       this.setIsLoadingFlag(true);
       await this.$refs.ic.segment()
-        .then(
-          () => {
-            this.$toast.add(scribbleSubmissionSuccess(this.scribbleCounter));
-          }
-        );
+        .then(() => {
+          this.$toast.add(scribbleSubmissionSuccess(this.scribbleCounter));
+        })
+        .catch(() => {
+          // const errorString = e.toString();
+          // console.log(`ERROR: ${errorString}`);
+          // if (errorString.includes('Img') || errorString.includes('Timeout')) {
+          this.$toast.add(fatalError);
+          // }
+          // else {
+          //   this.$toast.add(segmentationSubmission.error);
+          // }
+        });
       this.setIsLoadingFlag(false);
     },
 

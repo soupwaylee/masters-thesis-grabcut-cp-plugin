@@ -38,12 +38,22 @@ const actions = {
     });
   },
 
+  addSegmentationContext({commit}, context) {
+    commit({
+      type: 'ADD_SEGMENTATION_CONTEXT',
+      maskContext: context,
+    });
+  },
+
   async getSegmentation({commit, rootState}, {imageData, colors}) {
     const interactionSessionState = rootState.interactionSessionModule;
 
     let {scribbleIndices, scribbleTypes} = getScribbleMaskContext(imageData);
     let {pixelCount, fgPixelCount, bgPixelCount} = getScribblePixelCount(scribbleIndices, scribbleTypes);
     let imageId = interactionSessionState.testImages[interactionSessionState.currentImageIndex];
+
+    let now = new Date();
+    let rightNowUTC = now.toUTCString();
 
     let interactionRecord = {
       'sessionId': interactionSessionState.sessionId,
@@ -54,14 +64,20 @@ const actions = {
       "annotatedPixels": pixelCount,
       "foregroundPixels": fgPixelCount,
       "backgroundPixels": bgPixelCount,
-      "submissionIndex": interactionSessionState.submissionCounter,
+      "submissionIndex": interactionSessionState.submissionCounter + 1,
       "firstInteractionTime": interactionSessionState.currentImageInteractionStartingTime,
-      "submissionTime": interactionSessionState.segmentationRequestTime,
+      "submissionTime": rightNowUTC,
     }
-    
-    await grabcutService
+
+    // console.table(interactionRecord);
+
+    return await grabcutService
       .segmentImage(interactionRecord, {scribbleIndices, scribbleTypes})
       .then(response => {
+        if (response.interactionRecord.imageId !== interactionRecord.imageId) {
+          throw new Error('Img mismatch!');
+        }
+
         const submissionTime = new Date(response.interactionRecord.submissionTime);
         const gmtIdx = submissionTime.toString().indexOf('GMT');
 
@@ -80,8 +96,6 @@ const actions = {
           type: 'ADD_SEGMENTATION_CONTEXT',
           maskContext: segmentationMaskContext
         });
-      }, error => {
-        console.error(error);
       });
   },
 

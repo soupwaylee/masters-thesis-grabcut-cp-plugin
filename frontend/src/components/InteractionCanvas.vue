@@ -95,8 +95,8 @@ export default {
       'resetScribbleCount',
 
       'punchInImageInteractionStartingTime',
-      'punchInSegmentationTime',
       'incrementSubmissionCounter',
+      'addSegmentationContext',
 
       'setIsImageLoadingFlag',
       'setIsFirstInteractionFlag',
@@ -244,14 +244,15 @@ export default {
     },
 
     async segment() {
-      this.incrementSubmissionCounter();
-      this.punchInSegmentationTime();
-
+      const currentImageData = this.canvasCtx
+        .getImageData(0, 0, this.width, this.height)
+        .data;
       return this.$store.dispatch('getSegmentation', {
-        imageData: this.canvasCtx.getImageData(0, 0, this.width, this.height).data,
+        imageData: currentImageData,
         colors: this.maskColorSpace,
       }).then(
         () => {
+          this.incrementSubmissionCounter();
           this.$store.dispatch('setSegmentationForDisplay', this.latestSegmentation);
           this.setHasNewChanges(false);
         }

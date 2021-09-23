@@ -47,7 +47,7 @@ class GrabCutMaskList(Resource):
 
         try:
             mask = DAO.create(mask_record)
-            app.logger.info("[*] Created a mask.")
+            app.logger.info(f"[*] CREATED  MASK for <<{data['imageId']} by {data['sessionId']}>>")
             #TODO why does this expression throw an error
             # "sqlalchemy model is not json serializable"
 
@@ -58,5 +58,7 @@ class GrabCutMaskList(Resource):
             # )
             return mask
         except exc.SQLAlchemyError as err:
-            app.logger.error(err)
-            return f'DB error: {err}', 500
+            app.logger.error(
+                f"[*] FAILED CREATING MASK for <<{data['imageId']} by {data['sessionId']}>> with {err}"
+            )
+            return f"Failed with {err} for creating {data['imageId']} MASK for <<{data['sessionId']}>>", 500

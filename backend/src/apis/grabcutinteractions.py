@@ -76,24 +76,31 @@ class GrabCutInteractionList(Resource):
         annotated_pixel_indices = data['annotatedPixelIndices']
         annotated_pixel_types = data['annotatedPixelTypes']
 
+        session_id = interaction_record['sessionId']
         target_image_id = interaction_record['imageId']
+        submission = interaction_record['submissionIndex']
+
         target_image = ImageHandler.get_image(target_image_id)
 
         try:
+            app.logger.info(f'[*] STARTED SEGM <<Subm. {submission} for {target_image_id} of {session_id}>>')
             gc_mask = GrabCutSegmenter.gc_segment(
                 target_image,
                 annotated_pixel_indices,
                 annotated_pixel_types)
+            app.logger.info(f'[*] FINISHED SEGM <<Subm. {submission} for {target_image_id} of {session_id}>>')
         except RuntimeError as err:
-            app.logger.error(err)
-            return f'RuntimeError: {err}', 500
+            app.logger.error(f'[*] FAILED SEGM <<Subm. {submission} for {target_image_id} of {session_id}>> with {err}')
+            return f'Failed with {err} for <<Subm. {submission} for {target_image_id} of {session_id}>>', 500
 
         try:
             gci = DAO.create(interaction_record)
-            app.logger.info(f"[*] Created InteractionRecord {interaction_record}")
+            app.logger.info(f"[*] CREATED IAR for <<Subm. {submission} for {target_image_id} of {session_id}>>")
         except exc.SQLAlchemyError as err:
-            app.logger.error(err)
-            return f'DB error: {err}', 500
+            app.logger.error(
+                f'[*] FAILED CREATING IAR for <<Subm. {submission} for {target_image_id} of {session_id}>> with {err}'
+            )
+            return f'Failed with {err} for <<Subm. {submission} for {target_image_id} of {session_id}>>', 500
 
         return marshal(
             {

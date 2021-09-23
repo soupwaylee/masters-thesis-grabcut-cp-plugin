@@ -1,5 +1,6 @@
 from flask_restx import Namespace, Resource
 from utils.dhm_phase_images import ImageHandler
+import app
 
 api = Namespace('dhmimages', description='DHM phase image GET endpoint')
 
@@ -15,4 +16,5 @@ api = Namespace('dhmimages', description='DHM phase image GET endpoint')
 @api.param('img_id', 'Numerical ID of the image from the set of DHM phase images for the experiment')
 class DHMImage(Resource):
     def get(self, img_id):
+        app.logger.info(f'[*] Requested {img_id}')
         return ImageHandler.get_image_as_response(img_id)

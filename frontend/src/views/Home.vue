@@ -280,9 +280,9 @@ export default {
         .then(() => {
           this.$toast.add(scribbleSubmissionSuccess(this.scribbleCounter));
         })
-        .catch(() => {
+        .catch((error) => {
           // const errorString = e.toString();
-          // console.log(`ERROR: ${errorString}`);
+          console.error(`SEGM FAILED for ${currentImageIndex} with ${error}`);
           // if (errorString.includes('Img') || errorString.includes('Timeout')) {
           this.$toast.add(fatalError);
           // }
@@ -312,7 +312,7 @@ export default {
       try {
         await this.$store.dispatch('submitDisplayedMask');
       } catch(e) {
-        console.error(e);
+        console.error(`MASK SUBM FAILED with ${e}`);
         this.$toast.add(segmentationSubmission.error);
         this.setIsSubmittingFlag(false);
         return;

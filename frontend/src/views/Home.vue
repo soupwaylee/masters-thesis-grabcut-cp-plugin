@@ -111,7 +111,7 @@ export default {
     return {
       displayThankYou: false,
       brushOptions: [
-        {name: 'Foreground', value: 'fg', icon: 'pi pi-circle-off'},
+        {name: 'Cell', value: 'fg', icon: 'pi pi-circle-off'},
         {name: 'Background', value: 'bg', icon: 'pi pi-circle-on'}
       ],
     };

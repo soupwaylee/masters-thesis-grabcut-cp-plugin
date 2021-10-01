@@ -282,7 +282,7 @@ export default {
         })
         .catch((error) => {
           // const errorString = e.toString();
-          console.error(`SEGM FAILED for ${currentImageIndex} with ${error}`);
+          console.error(`SEGM FAILED for ${this.currentImageIndex} with ${error}`);
           // if (errorString.includes('Img') || errorString.includes('Timeout')) {
           this.$toast.add(fatalError);
           // }

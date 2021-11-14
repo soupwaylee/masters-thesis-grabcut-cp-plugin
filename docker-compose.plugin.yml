@@ -29,7 +29,7 @@ services:
         depends_on:
             cp-plugin-grabcut-postgres:
                 condition: service_healthy
-        restart: always
+        restart: on-failure
         environment:
             - PGHOST=cp-plugin-grabcut-postgres
             - PGDATABASE=postgres
@@ -47,7 +47,7 @@ services:
 
     cp-plugin-grabcut-postgres:
         image: postgres:alpine
-        restart: always
+        restart: on-failure
         environment:
             POSTGRES_PASSWORD: postgres
             POSTGRES_USER: postgres

@@ -13,6 +13,7 @@ services:
               target: /usr/src/app/src
               read_only: true
         labels:
+            - "cp.project.namespace=${COMPOSE_PROJECT_NAME}"
             - "traefik.enable=true"
             - "traefik.http.routers.cp-plugin-grabcut-frontend.rule=PathPrefix(`/frontends/grabcut`)"
             - "traefik.http.routers.cp-plugin-grabcut-frontend.entrypoints=web"
@@ -41,6 +42,7 @@ services:
             - CP_DEV_PYCHARMDEBUG_TARGET
             - CP_DEV_GUNICORN_TIMEOUT=${CP_DEV_GUNICORN_TIMEOUT:-30}
         labels:
+            - "cp.project.namespace=${COMPOSE_PROJECT_NAME}"
             - "traefik.enable=true"
             - "traefik.http.routers.cp-plugin-grabcut-backend.rule=PathPrefix(`/grabcut`)"
             - "traefik.http.routers.cp-plugin-grabcut-backend.entrypoints=web"

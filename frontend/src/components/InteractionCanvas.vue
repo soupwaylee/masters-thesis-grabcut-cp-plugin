@@ -223,6 +223,7 @@ export default {
         }
         if (point.trigger === 'begin' || begin) {
           this.canvasCtx.beginPath();
+          this.canvasCtx.lineCap = 'round';
           this.canvasCtx.moveTo(point.x, point.y);
         }
         this.canvasCtx.lineTo(point.x, point.y);

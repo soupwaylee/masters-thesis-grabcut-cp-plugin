@@ -13,6 +13,7 @@ services:
               target: /usr/src/app/src
               read_only: true
         labels:
+            - "cp.project.namespace=${COMPOSE_PROJECT_NAME}"
             - "traefik.enable=true"
             - "traefik.http.routers.cp-plugin-grabcut-frontend.rule=PathPrefix(`/frontends/grabcut`)"
             - "traefik.http.routers.cp-plugin-grabcut-frontend.entrypoints=web"
@@ -29,7 +30,7 @@ services:
         depends_on:
             cp-plugin-grabcut-postgres:
                 condition: service_healthy
-        restart: always
+        restart: on-failure
         environment:
             - PGHOST=cp-plugin-grabcut-postgres
             - PGDATABASE=postgres
@@ -41,13 +42,14 @@ services:
             - CP_DEV_PYCHARMDEBUG_TARGET
             - CP_DEV_GUNICORN_TIMEOUT=${CP_DEV_GUNICORN_TIMEOUT:-30}
         labels:
+            - "cp.project.namespace=${COMPOSE_PROJECT_NAME}"
             - "traefik.enable=true"
             - "traefik.http.routers.cp-plugin-grabcut-backend.rule=PathPrefix(`/grabcut`)"
             - "traefik.http.routers.cp-plugin-grabcut-backend.entrypoints=web"
 
     cp-plugin-grabcut-postgres:
         image: postgres:alpine
-        restart: always
+        restart: on-failure
         environment:
             POSTGRES_PASSWORD: postgres
             POSTGRES_USER: postgres
